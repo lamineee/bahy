@@ -1,58 +1,100 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { supabase } from "@/lib/supabase"
 
+interface Reward {
+  id: string
+  nom: string
+  probabilite: number
+  actif: boolean
+}
+
 export default function FeedbackPage() {
   const params = useParams()
-  const router = useRouter()
   const etablissementId = params.id as string
 
   const [etablissement, setEtablissement] = useState<any>(null)
+  const [rewards, setRewards] = useState<Reward[]>([])
   const [step, setStep] = useState<"rating" | "feedback" | "wheel" | "thanks">("rating")
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [comment, setComment] = useState("")
   const [loading, setLoading] = useState(false)
+  const [wonReward, setWonReward] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchEtablissement = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      // Récupérer l'établissement
+      const { data: etabData } = await supabase
         .from("etablissements")
         .select("*")
         .eq("id", etablissementId)
         .single()
-      
-      if (data) {
-        setEtablissement(data)
+
+      if (etabData) {
+        setEtablissement(etabData)
       }
+
+      // Récupérer les récompenses actives
+      const { data: rewardsData } = await supabase
+        .from("recompenses")
+        .select("*")
+        .eq("etablissement_id", etablissementId)
+        .eq("actif", true)
+
+        console.log("Rewards from DB:", rewardsData)
+        if (rewardsData && rewardsData.length > 0) {
+          setRewards(rewardsData)
+        } else {
+          console.log("No rewards found for this etablissement")
+        }
     }
 
     if (etablissementId) {
-      fetchEtablissement()
+      fetchData()
     }
   }, [etablissementId])
+
+  const pickRandomReward = (): string => {
+    if (rewards.length === 0) {
+      return "Un cadeau surprise !"
+    }
+
+    // Calculer le total des probabilités
+    const totalProb = rewards.reduce((sum, r) => sum + r.probabilite, 0)
+    
+    // Générer un nombre aléatoire entre 0 et totalProb
+    const random = Math.random() * totalProb
+    
+    // Trouver la récompense correspondante
+    let cumulative = 0
+    for (const reward of rewards) {
+      cumulative += reward.probabilite
+      if (random <= cumulative) {
+        return reward.nom
+      }
+    }
+
+    return rewards[0].nom
+  }
 
   const handleRatingSubmit = async () => {
     if (rating === 0) return
 
     if (rating >= 4) {
-      // Rediriger vers Google Maps pour laisser un avis public
-      // Pour l'instant, on passe à la roue de la fortune
       await saveAvis(true)
       setStep("wheel")
-      
-      // Si l'établissement a une URL Google Maps, ouvrir dans un nouvel onglet
+
       if (etablissement?.google_maps_url) {
         window.open(etablissement.google_maps_url, "_blank")
       }
     } else {
-      // Avis négatif → formulaire privé
       setStep("feedback")
     }
   }
@@ -74,7 +116,9 @@ export default function FeedbackPage() {
   }
 
   const handleWheelSpin = () => {
-    // Pour l'instant, on simule un gain
+    const reward = pickRandomReward()
+    setWonReward(reward)
+    
     setTimeout(() => {
       setStep("thanks")
     }, 2000)
@@ -91,13 +135,13 @@ export default function FeedbackPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
       <Card className="w-full max-w-md p-8">
-        
+
         {/* ÉTAPE 1: Notation */}
         {step === "rating" && (
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-2">{etablissement.nom}</h1>
             <p className="text-gray-600 mb-8">Comment s'est passée votre expérience ?</p>
-            
+
             <div className="flex justify-center gap-2 mb-8">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -117,8 +161,8 @@ export default function FeedbackPage() {
               ))}
             </div>
 
-            <Button 
-              onClick={handleRatingSubmit} 
+            <Button
+              onClick={handleRatingSubmit}
               disabled={rating === 0}
               className="w-full"
               size="lg"
@@ -126,9 +170,11 @@ export default function FeedbackPage() {
               Continuer
             </Button>
 
-            <p className="text-xs text-gray-400 mt-4">
-              🎁 Tentez de gagner un cadeau après votre avis !
-            </p>
+            {rewards.length > 0 && (
+              <p className="text-xs text-gray-400 mt-4">
+                🎁 Tentez de gagner un cadeau après votre avis !
+              </p>
+            )}
           </div>
         )}
 
@@ -147,8 +193,8 @@ export default function FeedbackPage() {
               className="mb-6 min-h-[120px]"
             />
 
-            <Button 
-              onClick={handleFeedbackSubmit} 
+            <Button
+              onClick={handleFeedbackSubmit}
               disabled={loading}
               className="w-full"
               size="lg"
@@ -172,7 +218,7 @@ export default function FeedbackPage() {
               </div>
             </div>
 
-            <Button 
+            <Button
               onClick={handleWheelSpin}
               className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600"
               size="lg"
@@ -188,7 +234,7 @@ export default function FeedbackPage() {
             <div className="text-6xl mb-4">🎊</div>
             <h1 className="text-2xl font-bold mb-2">Félicitations !</h1>
             <p className="text-gray-600 mb-4">
-              Vous avez gagné : <strong>10% de réduction</strong> sur votre prochaine visite !
+              Vous avez gagné : <strong>{wonReward}</strong>
             </p>
             <p className="text-sm text-gray-500">
               Montrez cet écran lors de votre prochaine visite.

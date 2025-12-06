@@ -1,46 +1,107 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Trash2 } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+
+interface Reward {
+  id: string
+  nom: string
+  probabilite: number
+  actif: boolean
+}
 
 export default function RewardsPage() {
-  const [rewards, setRewards] = useState([
-    { id: 1, name: "Café gratuit", probability: 30, active: true },
-    { id: 2, name: "Réduction 20%", probability: 25, active: true },
-    { id: 3, name: "Dessert gratuit", probability: 25, active: true },
-    { id: 4, name: "Apéritif gratuit", probability: 20, active: false },
-  ])
+  const [rewards, setRewards] = useState<Reward[]>([])
+  const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [newReward, setNewReward] = useState({ name: "", probability: 0 })
+  const [newReward, setNewReward] = useState({ nom: "", probabilite: 0 })
+  const [etablissementId, setEtablissementId] = useState<string | null>(null)
 
-  const handleAddReward = () => {
-    if (newReward.name && newReward.probability > 0) {
-      setRewards([
-        ...rewards,
-        {
-          id: Date.now(),
-          name: newReward.name,
-          probability: newReward.probability,
-          active: true,
-        },
-      ])
-      setNewReward({ name: "", probability: 0 })
+  useEffect(() => {
+    fetchRewards()
+  }, [])
+
+  const fetchRewards = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (user) {
+      // Récupérer l'établissement
+      const { data: etab } = await supabase
+        .from("etablissements")
+        .select("id")
+        .eq("client_id", user.id)
+        .single()
+
+      if (etab) {
+        setEtablissementId(etab.id)
+
+        // Récupérer les récompenses
+        const { data: rewardsData } = await supabase
+          .from("recompenses")
+          .select("*")
+          .eq("etablissement_id", etab.id)
+          .order("created_at", { ascending: false })
+
+        if (rewardsData) {
+          setRewards(rewardsData)
+        }
+      }
+    }
+    setLoading(false)
+  }
+
+  const handleAddReward = async () => {
+    if (!newReward.nom || newReward.probabilite <= 0 || !etablissementId) return
+
+    const { data, error } = await supabase
+      .from("recompenses")
+      .insert({
+        etablissement_id: etablissementId,
+        nom: newReward.nom,
+        probabilite: newReward.probabilite,
+        actif: true,
+      })
+      .select()
+      .single()
+
+    if (data) {
+      setRewards([data, ...rewards])
+      setNewReward({ nom: "", probabilite: 0 })
       setShowForm(false)
     }
   }
 
-  const handleToggleReward = (id: number) => {
-    setRewards(rewards.map((r) => (r.id === id ? { ...r, active: !r.active } : r)))
+  const handleToggleReward = async (id: string, currentStatus: boolean) => {
+    await supabase
+      .from("recompenses")
+      .update({ actif: !currentStatus })
+      .eq("id", id)
+
+    setRewards(rewards.map((r) => (r.id === id ? { ...r, actif: !r.actif } : r)))
   }
 
-  const handleDeleteReward = (id: number) => {
+  const handleDeleteReward = async (id: string) => {
+    await supabase
+      .from("recompenses")
+      .delete()
+      .eq("id", id)
+
     setRewards(rewards.filter((r) => r.id !== id))
   }
 
-  const totalProbability = rewards.reduce((sum, r) => sum + r.probability, 0)
+  const totalProbability = rewards.reduce((sum, r) => sum + r.probabilite, 0)
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <p>Chargement...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="p-6">
@@ -55,7 +116,6 @@ export default function RewardsPage() {
         </Button>
       </div>
 
-      {/* Add Reward Form */}
       {showForm && (
         <Card className="p-6 mb-6">
           <h2 className="text-lg font-bold text-foreground mb-4">Nouvelle récompense</h2>
@@ -64,8 +124,8 @@ export default function RewardsPage() {
               <label className="block text-sm font-medium mb-2">Nom de la récompense</label>
               <Input
                 placeholder="ex: Café gratuit"
-                value={newReward.name}
-                onChange={(e) => setNewReward({ ...newReward, name: e.target.value })}
+                value={newReward.nom}
+                onChange={(e) => setNewReward({ ...newReward, nom: e.target.value })}
               />
             </div>
             <div>
@@ -74,9 +134,10 @@ export default function RewardsPage() {
                 type="number"
                 min="0"
                 max="100"
+                step="0.1"
                 placeholder="30"
-                value={newReward.probability}
-                onChange={(e) => setNewReward({ ...newReward, probability: Number.parseInt(e.target.value) || 0 })}
+                value={newReward.probabilite || ""}
+                onChange={(e) => setNewReward({ ...newReward, probabilite: Number.parseFloat(e.target.value) || 0 })}
               />
             </div>
             <div className="flex gap-2">
@@ -91,7 +152,6 @@ export default function RewardsPage() {
         </Card>
       )}
 
-      {/* Rewards Grid */}
       <div className="space-y-4">
         {rewards.length === 0 ? (
           <Card className="p-8 text-center">
@@ -105,19 +165,19 @@ export default function RewardsPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-4">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">{reward.name}</h3>
-                        <p className="text-sm text-muted-foreground">Probabilité: {reward.probability}%</p>
+                        <h3 className="font-semibold text-foreground">{reward.nom}</h3>
+                        <p className="text-sm text-muted-foreground">Probabilité: {reward.probabilite}%</p>
                       </div>
                       <div className="text-right">
                         <label className="inline-flex items-center cursor-pointer">
                           <input
                             type="checkbox"
-                            checked={reward.active}
-                            onChange={() => handleToggleReward(reward.id)}
+                            checked={reward.actif}
+                            onChange={() => handleToggleReward(reward.id, reward.actif)}
                             className="w-4 h-4"
                           />
                           <span className="ml-2 text-sm font-medium text-muted-foreground">
-                            {reward.active ? "Actif" : "Inactif"}
+                            {reward.actif ? "Actif" : "Inactif"}
                           </span>
                         </label>
                       </div>
@@ -137,6 +197,9 @@ export default function RewardsPage() {
             <Card className="p-4 bg-muted/50">
               <p className="text-sm text-muted-foreground">
                 Probabilité totale: <span className="font-bold text-foreground">{totalProbability}%</span>
+                {totalProbability !== 100 && (
+                  <span className="text-yellow-600 ml-2">(devrait être 100%)</span>
+                )}
               </p>
             </Card>
           </>
