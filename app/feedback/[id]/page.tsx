@@ -37,7 +37,6 @@ export default function FeedbackPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Récupérer l'établissement
       const { data: etabData } = await supabase
         .from("etablissements")
         .select("*")
@@ -47,22 +46,18 @@ export default function FeedbackPage() {
       if (etabData) {
         setEtablissement(etabData)
 
-        // Récupérer la config IA pour les notifications
         const { data: configData } = await supabase
           .from("ai_config")
           .select("notify_1, notify_2, notify_email")
           .eq("etablissement_id", etablissementId)
           .single()
 
-          console.log("AI Config:", configData)
-          if (configData) {
-            setAiConfig(configData)
-          } else {
-            console.log("No AI config found")
-          }
+        console.log("AI Config:", configData)
+        if (configData) {
+          setAiConfig(configData)
+        }
       }
 
-      // Récupérer les récompenses actives
       const { data: rewardsData } = await supabase
         .from("recompenses")
         .select("*")
@@ -72,8 +67,6 @@ export default function FeedbackPage() {
       console.log("Rewards from DB:", rewardsData)
       if (rewardsData && rewardsData.length > 0) {
         setRewards(rewardsData)
-      } else {
-        console.log("No rewards found for this etablissement")
       }
     }
 
@@ -83,35 +76,35 @@ export default function FeedbackPage() {
   }, [etablissementId])
 
   const pickRandomReward = (): string => {
-    if (rewards.length === 0) {
-      return "Un cadeau surprise !"
-    }
-
+    if (rewards.length === 0) return "Un cadeau surprise !"
     const totalProb = rewards.reduce((sum, r) => sum + r.probabilite, 0)
     const random = Math.random() * totalProb
-    
     let cumulative = 0
     for (const reward of rewards) {
       cumulative += reward.probabilite
-      if (random <= cumulative) {
-        return reward.nom
-      }
+      if (random <= cumulative) return reward.nom
     }
-
     return rewards[0].nom
   }
 
   const sendNotification = async () => {
-    if (!aiConfig || !aiConfig.notify_email) return
+    console.log("sendNotification called", { aiConfig, rating })
 
-    const shouldNotify = 
-      (rating === 1 && aiConfig.notify_1) || 
+    if (!aiConfig || !aiConfig.notify_email) {
+      console.log("No config or email")
+      return
+    }
+
+    const shouldNotify =
+      (rating === 1 && aiConfig.notify_1) ||
       (rating === 2 && aiConfig.notify_2)
+
+    console.log("shouldNotify:", shouldNotify)
 
     if (!shouldNotify) return
 
     try {
-      await fetch("/api/send-notification", {
+      const res = await fetch("/api/send-notification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -121,6 +114,7 @@ export default function FeedbackPage() {
           commentaire: comment,
         }),
       })
+      console.log("Notification response:", await res.json())
     } catch (error) {
       console.error("Erreur envoi notification:", error)
     }
@@ -132,7 +126,6 @@ export default function FeedbackPage() {
     if (rating >= 4) {
       await saveAvis(true)
       setStep("wheel")
-
       if (etablissement?.google_maps_url) {
         window.open(etablissement.google_maps_url, "_blank")
       }
@@ -161,10 +154,7 @@ export default function FeedbackPage() {
   const handleWheelSpin = () => {
     const reward = pickRandomReward()
     setWonReward(reward)
-    
-    setTimeout(() => {
-      setStep("thanks")
-    }, 2000)
+    setTimeout(() => setStep("thanks"), 2000)
   }
 
   if (!etablissement) {
@@ -178,13 +168,10 @@ export default function FeedbackPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
       <Card className="w-full max-w-md p-8">
-
-        {/* ÉTAPE 1: Notation */}
         {step === "rating" && (
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-2">{etablissement.nom}</h1>
             <p className="text-gray-600 mb-8">Comment s'est passée votre expérience ?</p>
-
             <div className="flex justify-center gap-2 mb-8">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -203,64 +190,40 @@ export default function FeedbackPage() {
                 </button>
               ))}
             </div>
-
-            <Button
-              onClick={handleRatingSubmit}
-              disabled={rating === 0}
-              className="w-full"
-              size="lg"
-            >
+            <Button onClick={handleRatingSubmit} disabled={rating === 0} className="w-full" size="lg">
               Continuer
             </Button>
-
             {rewards.length > 0 && (
-              <p className="text-xs text-gray-400 mt-4">
-                🎁 Tentez de gagner un cadeau après votre avis !
-              </p>
+              <p className="text-xs text-gray-400 mt-4">🎁 Tentez de gagner un cadeau après votre avis !</p>
             )}
           </div>
         )}
 
-        {/* ÉTAPE 2: Feedback privé (si note < 4) */}
         {step === "feedback" && (
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-2">Aidez-nous à nous améliorer</h1>
-            <p className="text-gray-600 mb-6">
-              Votre avis reste privé et nous aide à progresser.
-            </p>
-
+            <p className="text-gray-600 mb-6">Votre avis reste privé et nous aide à progresser.</p>
             <Textarea
               placeholder="Qu'est-ce qui pourrait être amélioré ?"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               className="mb-6 min-h-[120px]"
             />
-
-            <Button
-              onClick={handleFeedbackSubmit}
-              disabled={loading}
-              className="w-full"
-              size="lg"
-            >
+            <Button onClick={handleFeedbackSubmit} disabled={loading} className="w-full" size="lg">
               {loading ? "Envoi..." : "Envoyer et jouer 🎁"}
             </Button>
           </div>
         )}
 
-        {/* ÉTAPE 3: Roue de la fortune */}
         {step === "wheel" && (
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-2">🎉 Merci pour votre avis !</h1>
-            <p className="text-gray-600 mb-8">
-              Tentez votre chance pour gagner un cadeau !
-            </p>
-
+            <p className="text-gray-600 mb-8">Tentez votre chance pour gagner un cadeau !</p>
             <div className="w-48 h-48 mx-auto mb-8 rounded-full bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 flex items-center justify-center animate-pulse">
               <div className="w-40 h-40 rounded-full bg-white flex items-center justify-center">
                 <span className="text-4xl">🎁</span>
               </div>
             </div>
-
             <Button
               onClick={handleWheelSpin}
               className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600"
@@ -271,20 +234,14 @@ export default function FeedbackPage() {
           </div>
         )}
 
-        {/* ÉTAPE 4: Merci */}
         {step === "thanks" && (
           <div className="text-center">
             <div className="text-6xl mb-4">🎊</div>
             <h1 className="text-2xl font-bold mb-2">Félicitations !</h1>
-            <p className="text-gray-600 mb-4">
-              Vous avez gagné : <strong>{wonReward}</strong>
-            </p>
-            <p className="text-sm text-gray-500">
-              Montrez cet écran lors de votre prochaine visite.
-            </p>
+            <p className="text-gray-600 mb-4">Vous avez gagné : <strong>{wonReward}</strong></p>
+            <p className="text-sm text-gray-500">Montrez cet écran lors de votre prochaine visite.</p>
           </div>
         )}
-
       </Card>
     </div>
   )
