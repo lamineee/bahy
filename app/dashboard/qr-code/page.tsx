@@ -8,22 +8,17 @@ import { Download } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 export default function QRCodePage() {
-  const [etablissementId, setEtablissementId] = useState<string | null>(null)
+  const [codeCourt, setCodeCourt] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const qrRef = useRef<HTMLDivElement>(null)
 
-  const feedbackUrl = etablissementId 
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/feedback/${etablissementId}`
-    : ""
+  const feedbackUrl = codeCourt ? `https://bahy.io/f/${codeCourt}` : ""
 
   useEffect(() => {
     const fetchEtablissement = async () => {
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser()
-        
-        console.log("User:", user)
-        console.log("User error:", userError)
         
         if (!user) {
           setError("Utilisateur non connecté")
@@ -33,12 +28,9 @@ export default function QRCodePage() {
 
         const { data, error: dbError } = await supabase
           .from("etablissements")
-          .select("id")
+          .select("id, code_court")
           .eq("client_id", user.id)
           .single()
-        
-        console.log("Etablissement data:", data)
-        console.log("DB error:", dbError)
         
         if (dbError) {
           setError(`Erreur DB: ${dbError.message}`)
@@ -47,7 +39,7 @@ export default function QRCodePage() {
         }
         
         if (data) {
-          setEtablissementId(data.id)
+          setCodeCourt(data.code_court)
         } else {
           setError("Aucun établissement trouvé")
         }
@@ -91,7 +83,7 @@ export default function QRCodePage() {
                 <div className="w-64 h-64 bg-red-50 rounded-lg flex items-center justify-center p-4">
                   <p className="text-red-500 text-center text-sm">{error}</p>
                 </div>
-              ) : etablissementId ? (
+              ) : codeCourt ? (
                 <QRCodeCanvas 
                   value={feedbackUrl}
                   size={256}
@@ -110,7 +102,7 @@ export default function QRCodePage() {
             Télécharger le QR code
           </Button>
           {feedbackUrl && (
-            <p className="text-xs text-muted-foreground mt-2 text-center break-all">
+            <p className="text-sm text-muted-foreground mt-2 text-center">
               {feedbackUrl}
             </p>
           )}
