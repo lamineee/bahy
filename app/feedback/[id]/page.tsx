@@ -54,9 +54,12 @@ export default function FeedbackPage() {
           .eq("etablissement_id", etablissementId)
           .single()
 
-        if (configData) {
-          setAiConfig(configData)
-        }
+          console.log("AI Config:", configData)
+          if (configData) {
+            setAiConfig(configData)
+          } else {
+            console.log("No AI config found")
+          }
       }
 
       // Récupérer les récompenses actives
