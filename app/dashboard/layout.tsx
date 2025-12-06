@@ -6,7 +6,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Home, QrCode, MessageSquare, Gift, Settings, LogOut, Menu, X } from "lucide-react"
+import { Home, QrCode, MessageSquare, Gift, Settings, LogOut, Menu, X, Sparkles } from "lucide-react"
 
 export default function DashboardLayout({
   children,
@@ -21,6 +21,7 @@ export default function DashboardLayout({
     { href: "/dashboard/qr-code", label: "Mon QR Code", icon: QrCode },
     { href: "/dashboard/reviews", label: "Avis reçus", icon: MessageSquare },
     { href: "/dashboard/rewards", label: "Récompenses", icon: Gift },
+    { href: "/dashboard/ai-responses", label: "Réponses IA", icon: Sparkles },
     { href: "/dashboard/settings", label: "Paramètres", icon: Settings },
   ]
 
