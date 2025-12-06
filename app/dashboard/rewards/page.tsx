@@ -56,7 +56,14 @@ export default function RewardsPage() {
 
   const handleAddReward = async () => {
     if (!newReward.nom || newReward.probabilite <= 0 || !etablissementId) return
-
+  
+    // Vérifier que le total ne dépasse pas 100%
+    const newTotal = totalProbability + newReward.probabilite
+    if (newTotal > 100) {
+      alert(`Impossible d'ajouter. Le total serait de ${newTotal}% (max 100%). Il vous reste ${100 - totalProbability}% disponible.`)
+      return
+    }
+  
     const { data, error } = await supabase
       .from("recompenses")
       .insert({
@@ -67,7 +74,7 @@ export default function RewardsPage() {
       })
       .select()
       .single()
-
+  
     if (data) {
       setRewards([data, ...rewards])
       setNewReward({ nom: "", probabilite: 0 })
@@ -129,21 +136,33 @@ export default function RewardsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Probabilité (%)</label>
-              <Input
-                type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                placeholder="30"
-                value={newReward.probabilite || ""}
-                onChange={(e) => setNewReward({ ...newReward, probabilite: Number.parseFloat(e.target.value) || 0 })}
-              />
-            </div>
+  <label className="block text-sm font-medium mb-2">Probabilité (%)</label>
+  <Input
+    type="number"
+    min="0"
+    max={100 - totalProbability}
+    step="0.1"
+    placeholder="30"
+    value={newReward.probabilite || ""}
+    onChange={(e) => setNewReward({ ...newReward, probabilite: Number.parseFloat(e.target.value) || 0 })}
+  />
+  <p className="text-xs text-muted-foreground mt-1">
+    Maximum disponible : {100 - totalProbability}%
+  </p>
+  {newReward.probabilite > 0 && (totalProbability + newReward.probabilite) > 100 && (
+    <p className="text-xs text-red-500 mt-1">
+      ⚠ Dépasse 100% ! Réduisez la probabilité.
+    </p>
+  )}
+</div>
             <div className="flex gap-2">
-              <Button onClick={handleAddReward} className="flex-1 bg-primary hover:bg-primary/90">
-                Ajouter
-              </Button>
+            <Button 
+  onClick={handleAddReward} 
+  className="flex-1 bg-primary hover:bg-primary/90"
+  disabled={!newReward.nom || newReward.probabilite <= 0 || (totalProbability + newReward.probabilite) > 100}
+>
+  Ajouter
+</Button>
               <Button variant="outline" onClick={() => setShowForm(false)} className="flex-1">
                 Annuler
               </Button>
@@ -194,14 +213,20 @@ export default function RewardsPage() {
                 </div>
               </Card>
             ))}
-            <Card className="p-4 bg-muted/50">
-              <p className="text-sm text-muted-foreground">
-                Probabilité totale: <span className="font-bold text-foreground">{totalProbability}%</span>
-                {totalProbability !== 100 && (
-                  <span className="text-yellow-600 ml-2">(devrait être 100%)</span>
-                )}
-              </p>
-            </Card>
+          <Card className={`p-4 ${totalProbability === 100 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+  <p className="text-sm">
+    Probabilité totale: <span className="font-bold">{totalProbability}%</span>
+    {totalProbability < 100 && (
+      <span className="text-yellow-600 ml-2">→ Il reste {100 - totalProbability}% à attribuer</span>
+    )}
+    {totalProbability === 100 && (
+      <span className="text-green-600 ml-2">✓ Parfait !</span>
+    )}
+    {totalProbability > 100 && (
+      <span className="text-red-600 ml-2">⚠ Trop élevé ! Supprimez des récompenses.</span>
+    )}
+  </p>
+</Card>
           </>
         )}
       </div>
