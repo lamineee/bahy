@@ -15,12 +15,19 @@ interface Reward {
   actif: boolean
 }
 
+interface AIConfig {
+  notify_1: boolean
+  notify_2: boolean
+  notify_email: string
+}
+
 export default function FeedbackPage() {
   const params = useParams()
   const etablissementId = params.id as string
 
   const [etablissement, setEtablissement] = useState<any>(null)
   const [rewards, setRewards] = useState<Reward[]>([])
+  const [aiConfig, setAiConfig] = useState<AIConfig | null>(null)
   const [step, setStep] = useState<"rating" | "feedback" | "wheel" | "thanks">("rating")
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
@@ -39,6 +46,17 @@ export default function FeedbackPage() {
 
       if (etabData) {
         setEtablissement(etabData)
+
+        // Récupérer la config IA pour les notifications
+        const { data: configData } = await supabase
+          .from("ai_config")
+          .select("notify_1, notify_2, notify_email")
+          .eq("etablissement_id", etablissementId)
+          .single()
+
+        if (configData) {
+          setAiConfig(configData)
+        }
       }
 
       // Récupérer les récompenses actives
@@ -48,12 +66,12 @@ export default function FeedbackPage() {
         .eq("etablissement_id", etablissementId)
         .eq("actif", true)
 
-        console.log("Rewards from DB:", rewardsData)
-        if (rewardsData && rewardsData.length > 0) {
-          setRewards(rewardsData)
-        } else {
-          console.log("No rewards found for this etablissement")
-        }
+      console.log("Rewards from DB:", rewardsData)
+      if (rewardsData && rewardsData.length > 0) {
+        setRewards(rewardsData)
+      } else {
+        console.log("No rewards found for this etablissement")
+      }
     }
 
     if (etablissementId) {
@@ -66,13 +84,9 @@ export default function FeedbackPage() {
       return "Un cadeau surprise !"
     }
 
-    // Calculer le total des probabilités
     const totalProb = rewards.reduce((sum, r) => sum + r.probabilite, 0)
-    
-    // Générer un nombre aléatoire entre 0 et totalProb
     const random = Math.random() * totalProb
     
-    // Trouver la récompense correspondante
     let cumulative = 0
     for (const reward of rewards) {
       cumulative += reward.probabilite
@@ -82,6 +96,31 @@ export default function FeedbackPage() {
     }
 
     return rewards[0].nom
+  }
+
+  const sendNotification = async () => {
+    if (!aiConfig || !aiConfig.notify_email) return
+
+    const shouldNotify = 
+      (rating === 1 && aiConfig.notify_1) || 
+      (rating === 2 && aiConfig.notify_2)
+
+    if (!shouldNotify) return
+
+    try {
+      await fetch("/api/send-notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: aiConfig.notify_email,
+          etablissement: etablissement.nom,
+          note: rating,
+          commentaire: comment,
+        }),
+      })
+    } catch (error) {
+      console.error("Erreur envoi notification:", error)
+    }
   }
 
   const handleRatingSubmit = async () => {
@@ -102,6 +141,7 @@ export default function FeedbackPage() {
   const handleFeedbackSubmit = async () => {
     setLoading(true)
     await saveAvis(false)
+    await sendNotification()
     setLoading(false)
     setStep("wheel")
   }
