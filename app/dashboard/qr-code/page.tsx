@@ -25,6 +25,11 @@ import {
   Upload,
   Loader2,
   Star,
+  Type,
+  Sparkles,
+  ToggleLeft,
+  MousePointer,
+  Zap,
 } from "lucide-react"
 
 // ============================================
@@ -38,6 +43,90 @@ interface QRSettings {
   showLogo: boolean
   logoUrl: string | null
 }
+
+interface PrintCustomization {
+  title: string
+  subtitle: string
+  showStars: boolean
+  showCta: boolean
+  ctaText: string
+}
+
+interface PrintPreset {
+  id: string
+  name: string
+  config: PrintCustomization
+}
+
+// ============================================
+// PRINT PRESETS
+// ============================================
+const printPresets: PrintPreset[] = [
+  {
+    id: "classique",
+    name: "Classique",
+    config: {
+      title: "Votre avis compte !",
+      subtitle: "Scannez pour donner votre avis",
+      showStars: true,
+      showCta: true,
+      ctaText: "Donnez votre avis"
+    }
+  },
+  {
+    id: "concours",
+    name: "Jeu concours",
+    config: {
+      title: "Tentez de gagner un dessert gratuit !",
+      subtitle: "Scannez et gagnez instantanément",
+      showStars: false,
+      showCta: true,
+      ctaText: "Je participe"
+    }
+  },
+  {
+    id: "reduction",
+    name: "Réduction",
+    config: {
+      title: "10% de réduction sur votre prochaine visite",
+      subtitle: "Laissez-nous un avis Google",
+      showStars: true,
+      showCta: true,
+      ctaText: "Obtenir ma réduction"
+    }
+  },
+  {
+    id: "simple",
+    name: "Simple",
+    config: {
+      title: "",
+      subtitle: "",
+      showStars: false,
+      showCta: false,
+      ctaText: ""
+    }
+  }
+]
+
+const titleSuggestions = [
+  "Tentez de gagner un dessert gratuit !",
+  "10% de réduction sur votre prochaine visite",
+  "Participez à notre jeu concours",
+  "Votre avis nous intéresse"
+]
+
+const subtitleSuggestions = [
+  "Scannez et gagnez instantanément",
+  "2 min pour nous aider à nous améliorer",
+  "Laissez-nous un avis Google"
+]
+
+const ctaSuggestions = [
+  "Donnez votre avis",
+  "Je participe",
+  "Tenter ma chance",
+  "C'est parti !"
+]
 
 // ============================================
 // ANIMATIONS
@@ -136,65 +225,131 @@ function MiniQR({ color, size = 40 }: { color: string; size?: number }) {
 }
 
 // Template Preview Components
-function TableTentPreview({ qrColor }: { qrColor: string }) {
+interface TemplatePreviewProps {
+  qrColor: string
+  customization: PrintCustomization
+}
+
+function TableTentPreview({ qrColor, customization }: TemplatePreviewProps) {
+  const { title, subtitle, showStars, showCta, ctaText } = customization
+  const displayTitle = title || "Votre avis compte !"
+  const displaySubtitle = subtitle || "Scannez pour donner votre avis"
+
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-3 bg-gradient-to-b from-white to-gray-50 rounded-lg">
-      <div className="text-[8px] font-bold text-gray-800 mb-1 text-center">Votre avis compte !</div>
+      {displayTitle && (
+        <div className="text-[7px] font-bold text-gray-800 mb-1 text-center leading-tight line-clamp-2">{displayTitle}</div>
+      )}
       <div className="p-1.5 bg-white rounded shadow-sm mb-1">
         <MiniQR color={qrColor} size={36} />
       </div>
-      <div className="text-[6px] text-gray-500 text-center">Scannez pour donner votre avis</div>
-      <div className="flex items-center gap-0.5 mt-1">
-        {[1,2,3,4,5].map(i => (
-          <Star key={i} size={6} className="text-amber-400 fill-amber-400" />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function WindowStickerPreview({ qrColor }: { qrColor: string }) {
-  return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-2 bg-white rounded-lg border-2 border-gray-200">
-      <div className="p-2 rounded-lg" style={{ backgroundColor: `${qrColor}15` }}>
-        <MiniQR color={qrColor} size={44} />
-      </div>
-      <div className="mt-2 text-[7px] font-semibold text-gray-700">Laissez-nous un avis</div>
-      <div className="text-[5px] text-gray-400 mt-0.5">bahy.io</div>
-    </div>
-  )
-}
-
-function BusinessCardPreview({ qrColor }: { qrColor: string }) {
-  return (
-    <div className="w-full h-full flex items-center p-2 bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg">
-      <div className="flex-1">
-        <div className="text-[7px] font-bold text-white">Mon Restaurant</div>
-        <div className="text-[5px] text-gray-400 mt-0.5">Cuisine française</div>
+      {displaySubtitle && (
+        <div className="text-[5px] text-gray-500 text-center leading-tight line-clamp-2">{displaySubtitle}</div>
+      )}
+      {showStars && (
         <div className="flex items-center gap-0.5 mt-1">
           {[1,2,3,4,5].map(i => (
             <Star key={i} size={5} className="text-amber-400 fill-amber-400" />
           ))}
         </div>
+      )}
+      {showCta && ctaText && (
+        <div className="mt-1 px-1.5 py-0.5 rounded-full text-[4px] font-medium text-white" style={{ backgroundColor: qrColor }}>
+          {ctaText}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function WindowStickerPreview({ qrColor, customization }: TemplatePreviewProps) {
+  const { title, subtitle, showStars, showCta, ctaText } = customization
+  const displayTitle = title || "Votre avis compte !"
+  const displaySubtitle = subtitle || "Scannez pour donner votre avis"
+
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center p-2 bg-white rounded-lg border-2 border-gray-200">
+      {displayTitle && (
+        <div className="text-[6px] font-bold text-gray-800 mb-1 text-center leading-tight line-clamp-2">{displayTitle}</div>
+      )}
+      <div className="p-2 rounded-lg" style={{ backgroundColor: `${qrColor}15` }}>
+        <MiniQR color={qrColor} size={40} />
       </div>
-      <div className="p-1 bg-white rounded">
+      {displaySubtitle && (
+        <div className="mt-1 text-[5px] text-gray-500 text-center leading-tight line-clamp-2">{displaySubtitle}</div>
+      )}
+      {showStars && (
+        <div className="flex items-center gap-0.5 mt-1">
+          {[1,2,3,4,5].map(i => (
+            <Star key={i} size={5} className="text-amber-400 fill-amber-400" />
+          ))}
+        </div>
+      )}
+      {showCta && ctaText && (
+        <div className="mt-1 px-1.5 py-0.5 rounded-full text-[4px] font-medium text-white" style={{ backgroundColor: qrColor }}>
+          {ctaText}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BusinessCardPreview({ qrColor, customization }: TemplatePreviewProps) {
+  const { title, showStars, showCta, ctaText } = customization
+  const displayTitle = title || "Mon Restaurant"
+
+  return (
+    <div className="w-full h-full flex items-center p-2 bg-gradient-to-r from-gray-900 to-gray-800 rounded-lg">
+      <div className="flex-1 min-w-0">
+        <div className="text-[6px] font-bold text-white leading-tight line-clamp-2">{displayTitle}</div>
+        {showStars && (
+          <div className="flex items-center gap-0.5 mt-1">
+            {[1,2,3,4,5].map(i => (
+              <Star key={i} size={4} className="text-amber-400 fill-amber-400" />
+            ))}
+          </div>
+        )}
+        {showCta && ctaText && (
+          <div className="mt-1 px-1 py-0.5 rounded text-[4px] font-medium text-white inline-block" style={{ backgroundColor: qrColor }}>
+            {ctaText}
+          </div>
+        )}
+      </div>
+      <div className="p-1 bg-white rounded flex-shrink-0">
         <MiniQR color={qrColor} size={28} />
       </div>
     </div>
   )
 }
 
-function PosterA4Preview({ qrColor }: { qrColor: string }) {
+function PosterA4Preview({ qrColor, customization }: TemplatePreviewProps) {
+  const { title, subtitle, showStars, showCta, ctaText } = customization
+  const displayTitle = title || "Votre avis compte !"
+  const displaySubtitle = subtitle || "Scannez pour donner votre avis"
+
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-3 bg-white rounded-lg">
-      <div className="text-[10px] font-bold text-gray-800 mb-2 text-center">Votre avis<br/>nous intéresse</div>
+      {displayTitle && (
+        <div className="text-[8px] font-bold text-gray-800 mb-2 text-center leading-tight line-clamp-2">{displayTitle}</div>
+      )}
       <div className="p-2 rounded-xl shadow-md" style={{ backgroundColor: `${qrColor}10` }}>
-        <MiniQR color={qrColor} size={48} />
+        <MiniQR color={qrColor} size={44} />
       </div>
-      <div className="mt-2 text-[6px] text-gray-500 text-center">Scannez ce QR code</div>
-      <div className="mt-1 px-2 py-0.5 rounded-full text-[5px] font-medium text-white" style={{ backgroundColor: qrColor }}>
-        Donnez votre avis
-      </div>
+      {displaySubtitle && (
+        <div className="mt-2 text-[5px] text-gray-500 text-center leading-tight line-clamp-2">{displaySubtitle}</div>
+      )}
+      {showStars && (
+        <div className="flex items-center gap-0.5 mt-1">
+          {[1,2,3,4,5].map(i => (
+            <Star key={i} size={5} className="text-amber-400 fill-amber-400" />
+          ))}
+        </div>
+      )}
+      {showCta && ctaText && (
+        <div className="mt-1 px-2 py-0.5 rounded-full text-[5px] font-medium text-white" style={{ backgroundColor: qrColor }}>
+          {ctaText}
+        </div>
+      )}
     </div>
   )
 }
@@ -202,34 +357,34 @@ function PosterA4Preview({ qrColor }: { qrColor: string }) {
 // ============================================
 // MARKETING TEMPLATES
 // ============================================
-const getMarketingTemplates = (qrColor: string) => [
+const getMarketingTemplates = (qrColor: string, customization: PrintCustomization) => [
   {
     id: "table-tent",
     name: "Chevalet de table",
     description: "Idéal pour les restaurants",
     size: "10x15 cm",
-    preview: <TableTentPreview qrColor={qrColor} />
+    preview: <TableTentPreview qrColor={qrColor} customization={customization} />
   },
   {
     id: "window-sticker",
     name: "Sticker vitrine",
     description: "Pour l'entrée de votre commerce",
     size: "15x15 cm",
-    preview: <WindowStickerPreview qrColor={qrColor} />
+    preview: <WindowStickerPreview qrColor={qrColor} customization={customization} />
   },
   {
     id: "business-card",
     name: "Carte de visite",
     description: "Format carte classique",
     size: "8.5x5.5 cm",
-    preview: <BusinessCardPreview qrColor={qrColor} />
+    preview: <BusinessCardPreview qrColor={qrColor} customization={customization} />
   },
   {
     id: "poster-a4",
     name: "Affiche A4",
     description: "Grand format visible",
     size: "21x29.7 cm",
-    preview: <PosterA4Preview qrColor={qrColor} />
+    preview: <PosterA4Preview qrColor={qrColor} customization={customization} />
   }
 ]
 
@@ -252,6 +407,17 @@ export default function QRCodePage() {
     showLogo: false,
     logoUrl: null
   })
+
+  // Print Customization
+  const [printCustomization, setPrintCustomization] = useState<PrintCustomization>({
+    title: "Votre avis compte !",
+    subtitle: "Scannez pour donner votre avis",
+    showStars: true,
+    showCta: true,
+    ctaText: "Donnez votre avis"
+  })
+
+  const [activePreset, setActivePreset] = useState<string>("classique")
 
   const feedbackUrl = `https://bahy.io/f/${codeCourt}`
   const shortUrl = `bahy.io/f/${codeCourt}`
@@ -331,7 +497,16 @@ export default function QRCodePage() {
     setShowDownloadMenu(false)
   }, [codeCourt])
 
-  const marketingTemplates = getMarketingTemplates(settings.color)
+  const marketingTemplates = getMarketingTemplates(settings.color, printCustomization)
+
+  // Apply preset
+  const applyPreset = (presetId: string) => {
+    const preset = printPresets.find(p => p.id === presetId)
+    if (preset) {
+      setPrintCustomization(preset.config)
+      setActivePreset(presetId)
+    }
+  }
 
   if (loading) {
     return (
@@ -639,6 +814,201 @@ export default function QRCodePage() {
           <span className="text-xs text-white/30 ml-2">Templates marketing</span>
         </div>
 
+        {/* Customization Panel */}
+        <div className="mb-6 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+          {/* Preset Buttons */}
+          <div className="flex items-center gap-2 mb-5">
+            <Zap size={14} className="text-white/40" />
+            <span className="text-xs font-medium text-white/50 uppercase tracking-wider">Presets rapides</span>
+            <div className="flex-1 h-px bg-white/[0.06] ml-2" />
+          </div>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {printPresets.map((preset) => (
+              <motion.button
+                key={preset.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => applyPreset(preset.id)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  activePreset === preset.id
+                    ? "bg-[#00C9A7] text-black"
+                    : "bg-white/[0.04] text-white/60 border border-white/[0.08] hover:bg-white/[0.08] hover:text-white"
+                }`}
+              >
+                {preset.name}
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Custom Fields Grid */}
+          <div className="grid grid-cols-2 gap-5">
+            {/* Left Column - Text Fields */}
+            <div className="space-y-4">
+              {/* Title Field */}
+              <div>
+                <label className="flex items-center gap-2 text-xs font-medium text-white/50 uppercase tracking-wider mb-2">
+                  <Type size={12} />
+                  Titre principal
+                </label>
+                <input
+                  type="text"
+                  value={printCustomization.title}
+                  onChange={(e) => {
+                    setPrintCustomization(p => ({ ...p, title: e.target.value }))
+                    setActivePreset("")
+                  }}
+                  placeholder="Votre avis compte !"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#00C9A7]/50 focus:ring-1 focus:ring-[#00C9A7]/30 transition-all"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {titleSuggestions.map((suggestion, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setPrintCustomization(p => ({ ...p, title: suggestion }))
+                        setActivePreset("")
+                      }}
+                      className="px-2 py-1 rounded-lg text-[10px] text-white/40 bg-white/[0.03] hover:bg-white/[0.06] hover:text-white/60 transition-all truncate max-w-[150px]"
+                      title={suggestion}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subtitle Field */}
+              <div>
+                <label className="flex items-center gap-2 text-xs font-medium text-white/50 uppercase tracking-wider mb-2">
+                  <Type size={10} />
+                  Sous-titre
+                </label>
+                <input
+                  type="text"
+                  value={printCustomization.subtitle}
+                  onChange={(e) => {
+                    setPrintCustomization(p => ({ ...p, subtitle: e.target.value }))
+                    setActivePreset("")
+                  }}
+                  placeholder="Scannez pour donner votre avis"
+                  className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#00C9A7]/50 focus:ring-1 focus:ring-[#00C9A7]/30 transition-all"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {subtitleSuggestions.map((suggestion, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setPrintCustomization(p => ({ ...p, subtitle: suggestion }))
+                        setActivePreset("")
+                      }}
+                      className="px-2 py-1 rounded-lg text-[10px] text-white/40 bg-white/[0.03] hover:bg-white/[0.06] hover:text-white/60 transition-all truncate max-w-[150px]"
+                      title={suggestion}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Toggles */}
+            <div className="space-y-4">
+              {/* Stars Toggle */}
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(i => (
+                        <Star key={i} size={12} className="text-amber-400 fill-amber-400" />
+                      ))}
+                    </div>
+                    <span className="text-sm text-white/70">Afficher les étoiles</span>
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setPrintCustomization(p => ({ ...p, showStars: !p.showStars }))
+                      setActivePreset("")
+                    }}
+                    className={`relative w-11 h-6 rounded-full transition-all ${
+                      printCustomization.showStars ? "bg-[#00C9A7]" : "bg-white/10"
+                    }`}
+                  >
+                    <motion.div
+                      animate={{ x: printCustomization.showStars ? 20 : 2 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-md"
+                    />
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* CTA Toggle */}
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <MousePointer size={14} className="text-white/40" />
+                    <span className="text-sm text-white/70">Afficher le bouton CTA</span>
+                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setPrintCustomization(p => ({ ...p, showCta: !p.showCta }))
+                      setActivePreset("")
+                    }}
+                    className={`relative w-11 h-6 rounded-full transition-all ${
+                      printCustomization.showCta ? "bg-[#00C9A7]" : "bg-white/10"
+                    }`}
+                  >
+                    <motion.div
+                      animate={{ x: printCustomization.showCta ? 20 : 2 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-md"
+                    />
+                  </motion.button>
+                </div>
+
+                <AnimatePresence>
+                  {printCustomization.showCta && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <input
+                        type="text"
+                        value={printCustomization.ctaText}
+                        onChange={(e) => {
+                          setPrintCustomization(p => ({ ...p, ctaText: e.target.value }))
+                          setActivePreset("")
+                        }}
+                        placeholder="Donnez votre avis"
+                        className="w-full px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-[#00C9A7]/50 transition-all"
+                      />
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {ctaSuggestions.map((suggestion, i) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setPrintCustomization(p => ({ ...p, ctaText: suggestion }))
+                              setActivePreset("")
+                            }}
+                            className="px-2 py-1 rounded-lg text-[10px] text-white/40 bg-white/[0.03] hover:bg-white/[0.06] hover:text-white/60 transition-all"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Template Grid */}
         <div className="grid grid-cols-4 gap-4">
           {marketingTemplates.map((template) => (
             <motion.div
