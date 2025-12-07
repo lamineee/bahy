@@ -1,8 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   LayoutDashboard,
   MessageSquare,
@@ -10,9 +11,23 @@ import {
   Settings,
   LogOut,
   Sparkles,
+  Building2,
+  User,
+  Bell,
+  Puzzle,
+  CreditCard,
+  ChevronRight,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useRouter } from "next/navigation"
+
+const settingsSubItems = [
+  { icon: Building2, label: "Établissement", href: "/dashboard/settings/etablissement" },
+  { icon: User, label: "Compte", href: "/dashboard/settings/compte" },
+  { icon: Bell, label: "Notifications", href: "/dashboard/settings/notifications" },
+  { icon: Puzzle, label: "Intégrations", href: "/dashboard/settings/integrations" },
+  { icon: CreditCard, label: "Facturation", href: "/dashboard/settings/facturation" },
+]
 
 export default function DashboardLayout({
   children,
@@ -21,6 +36,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname()
   const router = useRouter()
+  const [settingsHovered, setSettingsHovered] = useState(false)
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -31,13 +47,14 @@ export default function DashboardLayout({
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
     { icon: MessageSquare, label: "Réponses IA", href: "/dashboard/ai-responses" },
     { icon: QrCode, label: "QR Code", href: "/dashboard/qr-code" },
-    { icon: Settings, label: "Paramètres", href: "/dashboard/settings" },
   ]
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard"
     return pathname.startsWith(href)
   }
+
+  const isSettingsActive = pathname.startsWith("/dashboard/settings")
 
   return (
     <div className="h-screen w-screen bg-[#0a0a0b] flex overflow-hidden relative">
@@ -46,7 +63,7 @@ export default function DashboardLayout({
       <div className="noise-overlay" />
 
       {/* Sidebar */}
-      <aside className="w-60 flex flex-col py-6 px-4 border-r border-white/[0.04] relative z-10">
+      <aside className="w-60 flex flex-col py-6 px-4 border-r border-white/[0.04] relative z-20">
         {/* Logo */}
         <div className="flex items-center gap-3 px-3 mb-10">
           <div className="relative">
@@ -98,6 +115,91 @@ export default function DashboardLayout({
               </Link>
             )
           })}
+
+          {/* Settings with flyout */}
+          <div
+            className="relative"
+            onMouseEnter={() => setSettingsHovered(true)}
+            onMouseLeave={() => setSettingsHovered(false)}
+          >
+            <Link
+              href="/dashboard/settings/etablissement"
+              className="relative block"
+            >
+              {isSettingsActive && (
+                <motion.div
+                  layoutId="activeNav"
+                  className="absolute inset-0 bg-white/[0.06] rounded-lg"
+                  transition={{ type: "spring", duration: 0.4, bounce: 0.1 }}
+                />
+              )}
+              <div
+                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-colors duration-150 ${
+                  isSettingsActive
+                    ? "text-white font-medium"
+                    : "text-white/40 hover:text-white/70"
+                }`}
+              >
+                <Settings
+                  size={18}
+                  strokeWidth={1.8}
+                  className={isSettingsActive ? "text-white/90" : "text-white/30"}
+                />
+                Paramètres
+                <ChevronRight
+                  size={14}
+                  className={`ml-auto transition-transform ${settingsHovered ? "rotate-0 text-white/50" : "text-white/20"}`}
+                />
+                {isSettingsActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 bg-gradient-to-b from-[#00C9A7] to-[#00E4BC] rounded-full" />
+                )}
+              </div>
+            </Link>
+
+            {/* Flyout Menu */}
+            <AnimatePresence>
+              {settingsHovered && (
+                <motion.div
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -8 }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
+                  className="absolute left-full top-0 ml-2 w-52 py-2 rounded-xl bg-[#111112] border border-white/[0.08] shadow-xl shadow-black/40"
+                >
+                  {settingsSubItems.map((subItem, index) => {
+                    const subActive = pathname === subItem.href
+                    return (
+                      <Link
+                        key={subItem.href}
+                        href={subItem.href}
+                      >
+                        <motion.div
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.03 }}
+                          className={`flex items-center gap-3 px-4 py-2.5 mx-1.5 rounded-lg text-[13px] transition-all duration-150 ${
+                            subActive
+                              ? "text-white bg-white/[0.08]"
+                              : "text-white/50 hover:text-white hover:bg-white/[0.04]"
+                          }`}
+                        >
+                          <subItem.icon
+                            size={16}
+                            strokeWidth={1.8}
+                            className={subActive ? "text-[#00C9A7]" : "text-white/30"}
+                          />
+                          {subItem.label}
+                          {subActive && (
+                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00C9A7]" />
+                          )}
+                        </motion.div>
+                      </Link>
+                    )
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </nav>
 
         {/* Bottom section */}

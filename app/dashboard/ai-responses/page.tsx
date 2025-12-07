@@ -788,19 +788,14 @@ export default function ReponsesIAPage() {
       {/* Footer */}
       <motion.div
         variants={item}
-        className="flex items-center justify-between pt-4 border-t border-white/[0.06]"
+        className="flex flex-col items-center gap-4 pt-6 border-t border-white/[0.06]"
       >
-        <p className="text-xs text-white/30 flex items-center gap-2">
-          <Bot size={14} />
-          Les réponses sont générées par IA et envoyées automatiquement sur Google
-        </p>
-
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={saveSettings}
           disabled={isSaving}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold bg-[#00C9A7] text-black hover:bg-[#00E4BC] disabled:opacity-70 transition-all"
+          className="flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-semibold bg-[#00C9A7] text-black hover:bg-[#00E4BC] disabled:opacity-70 transition-all shadow-lg shadow-[#00C9A7]/20"
         >
           {isSaving ? (
             <>
@@ -815,10 +810,15 @@ export default function ReponsesIAPage() {
           ) : (
             <>
               <Save size={16} />
-              Sauvegarder les paramètres
+              Sauvegarder
             </>
           )}
         </motion.button>
+
+        <p className="text-xs text-white/30 flex items-center gap-2">
+          <Bot size={14} />
+          Les réponses sont générées par IA et envoyées automatiquement sur Google
+        </p>
       </motion.div>
 
       {/* Add/Edit Rule Modal */}
