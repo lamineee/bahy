@@ -6,7 +6,6 @@ import { motion } from "framer-motion"
 import {
   LayoutDashboard,
   MessageSquare,
-  Star,
   QrCode,
   Settings,
   LogOut,
@@ -30,7 +29,6 @@ export default function DashboardLayout({
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-    { icon: Star, label: "Avis", href: "/dashboard/reviews" },
     { icon: MessageSquare, label: "Réponses IA", href: "/dashboard/ai-responses" },
     { icon: QrCode, label: "QR Code", href: "/dashboard/qr-code" },
     { icon: Settings, label: "Paramètres", href: "/dashboard/settings" },

@@ -14,33 +14,25 @@ import {
 import {
   Star,
   TrendingUp,
-  TrendingDown,
   ArrowUpRight,
   ChevronRight,
   MessageSquare,
   Zap,
-  AlertCircle,
   DollarSign,
   Eye,
   Copy,
   Flame,
-  Award,
-  Crown,
-  Rocket,
-  Trophy,
   Bell,
-  Users,
-  ArrowRight,
-  Gift,
   BarChart3,
   Check,
   Activity,
-  Sparkles,
   ExternalLink,
   Search,
   Command,
   Share2,
-  RefreshCw,
+  X,
+  Mail,
+  MessageSquareWarning,
 } from "lucide-react"
 
 // ============================================
@@ -90,19 +82,13 @@ const recentReviews = [
   { id: 4, name: "Lucas Petit", rating: 2, text: "Déçu par l'attente, à améliorer.", time: "1j", responded: false },
 ]
 
-const achievements = [
-  { id: 1, icon: Trophy, label: "100 Avis", unlocked: true, color: "#F59E0B" },
-  { id: 2, icon: Flame, label: "7j Streak", unlocked: true, color: "#EF4444" },
-  { id: 3, icon: Crown, label: "Top 10%", unlocked: true, color: "#8B5CF6" },
-  { id: 4, icon: Rocket, label: "Croissance", unlocked: false, color: "#3B82F6" },
-  { id: 5, icon: Gift, label: "Fidélité", unlocked: false, color: "#10B981" },
-]
 
-const competitors = [
-  { name: "Vous", rating: 4.7, isYou: true },
-  { name: "Concurrent A", rating: 4.3, isYou: false },
-  { name: "Concurrent B", rating: 4.1, isYou: false },
-  { name: "Moyenne secteur", rating: 4.2, isYou: false },
+// Feedbacks interceptés (avis négatifs récoltés avant Google)
+const interceptedFeedbacks = [
+  { id: 1, rating: 2, category: "Service", comment: "Le serveur était désagréable et pressé.", email: "marie.l@gmail.com", date: "Il y a 2h" },
+  { id: 2, rating: 1, category: "Attente", comment: "Plus de 40 minutes d'attente, inadmissible.", email: null, date: "Hier" },
+  { id: 3, rating: 2, category: "Prix", comment: "Trop cher pour ce que c'est.", email: "thomas.m@outlook.fr", date: "Il y a 3j" },
+  { id: 4, rating: 3, category: "Propreté", comment: "Toilettes pas très propres.", email: null, date: "Il y a 5j" },
 ]
 
 // ============================================
@@ -310,134 +296,6 @@ function RatingDistribution({ data }: { data: { rating: number; percentage: numb
   )
 }
 
-function AchievementBadge({ icon: Icon, label, unlocked, color }: {
-  icon: React.ElementType; label: string; unlocked: boolean; color: string
-}) {
-  return (
-    <motion.div
-      whileHover={unlocked ? { scale: 1.08, y: -2 } : {}}
-      className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-pointer transition-all ${
-        unlocked ? "opacity-100" : "opacity-30 grayscale"
-      }`}
-    >
-      {unlocked && (
-        <div className="absolute inset-0 rounded-xl opacity-20 blur-lg" style={{ background: color }} />
-      )}
-      <div
-        className="relative p-2.5 rounded-xl"
-        style={{ backgroundColor: unlocked ? `${color}20` : "rgba(255,255,255,0.04)" }}
-      >
-        <Icon size={16} style={{ color: unlocked ? color : "rgba(255,255,255,0.3)" }} />
-      </div>
-      <span className="text-[10px] font-medium text-white/50">{label}</span>
-      {unlocked && (
-        <motion.div
-          className="absolute -top-1 -right-1"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", delay: 0.8 }}
-        >
-          <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
-            <Check size={10} className="text-white" strokeWidth={3} />
-          </div>
-        </motion.div>
-      )}
-    </motion.div>
-  )
-}
-
-function CompetitorBar({ data }: { data: typeof competitors }) {
-  return (
-    <div className="space-y-3">
-      {data.map((item, i) => (
-        <motion.div
-          key={item.name}
-          className="flex items-center gap-3"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.6 + i * 0.1 }}
-        >
-          <span className={`text-[11px] w-28 truncate ${item.isYou ? "text-[#00C9A7] font-semibold" : "text-white/40"}`}>
-            {item.name}
-          </span>
-          <div className="flex-1 h-2 bg-white/[0.04] rounded-full overflow-hidden">
-            <motion.div
-              className="h-full rounded-full"
-              style={{
-                backgroundColor: item.isYou ? "#00C9A7" : "rgba(255,255,255,0.12)",
-                boxShadow: item.isYou ? "0 0 10px rgba(0, 201, 167, 0.3)" : "none"
-              }}
-              initial={{ width: 0 }}
-              animate={{ width: `${(item.rating / 5) * 100}%` }}
-              transition={{ duration: 1, delay: 0.8 + i * 0.1 }}
-            />
-          </div>
-          <span className={`text-xs font-semibold w-8 text-right ${item.isYou ? "text-[#00C9A7]" : "text-white/40"}`}>
-            {item.rating}
-          </span>
-        </motion.div>
-      ))}
-    </div>
-  )
-}
-
-function AIInsight() {
-  const insights = [
-    "Répondre aux avis négatifs dans les 24h augmente la conversion de 33%",
-    "Votre note est 0.5 points au-dessus de la moyenne du secteur",
-    "Les clients mentionnent souvent la qualité de votre service client",
-  ]
-  const [current, setCurrent] = useState(0)
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrent((p) => (p + 1) % insights.length), 5000)
-    return () => clearInterval(timer)
-  }, [])
-
-  return (
-    <motion.div
-      variants={item}
-      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500/[0.08] via-indigo-500/[0.05] to-purple-500/[0.08] border border-violet-500/10 p-5"
-    >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/10 rounded-full blur-3xl" />
-      <div className="relative flex items-start gap-3">
-        <div className="p-2.5 rounded-xl bg-violet-500/15">
-          <Sparkles size={16} className="text-violet-400" />
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-semibold text-violet-400">Insight IA</span>
-            <span className="px-1.5 py-0.5 text-[9px] font-bold bg-violet-500/20 text-violet-300 rounded-md uppercase">
-              Beta
-            </span>
-          </div>
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={current}
-              className="text-[13px] text-white/60 leading-relaxed"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              {insights[current]}
-            </motion.p>
-          </AnimatePresence>
-        </div>
-      </div>
-      <div className="flex justify-center gap-1.5 mt-4">
-        {insights.map((_, i) => (
-          <motion.div
-            key={i}
-            className={`h-1 rounded-full transition-all duration-300 ${
-              i === current ? "w-5 bg-violet-400" : "w-1.5 bg-white/10"
-            }`}
-          />
-        ))}
-      </div>
-    </motion.div>
-  )
-}
-
 function DashboardSkeleton() {
   return (
     <div className="space-y-6">
@@ -465,6 +323,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
   const [userName, setUserName] = useState("there")
+  const [selectedFeedback, setSelectedFeedback] = useState<typeof interceptedFeedbacks[0] | null>(null)
+  const [showAllFeedbacks, setShowAllFeedbacks] = useState(false)
   const [stats, setStats] = useState({
     rating: 4.7,
     ratingChange: 0.2,
@@ -499,8 +359,6 @@ export default function DashboardPage() {
     { rating: 2, percentage: 4 },
     { rating: 1, percentage: 3 },
   ], [])
-
-  const attentionReviews = recentReviews.filter(r => r.rating <= 3)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -799,42 +657,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Achievements & AI Insight */}
-      <div className="grid grid-cols-12 gap-4 mb-4">
-        <Card className="col-span-5" glowColor="rgba(139, 92, 246, 0.06)">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-purple-500/15">
-                <Award size={16} className="text-purple-400" />
-              </div>
-              <span className="text-[11px] font-medium text-white/40 uppercase tracking-wider">Achievements</span>
-            </div>
-            <span className="text-xs text-white/25 font-medium">
-              {achievements.filter(a => a.unlocked).length}/{achievements.length}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            {achievements.map((a) => (
-              <AchievementBadge key={a.id} {...a} />
-            ))}
-          </div>
-        </Card>
-
-        <div className="col-span-4">
-          <AIInsight />
-        </div>
-
-        <Card className="col-span-3" glowColor="rgba(99, 102, 241, 0.06)">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 rounded-xl bg-indigo-500/15">
-              <Users size={14} className="text-indigo-400" />
-            </div>
-            <span className="text-[11px] font-medium text-white/40 uppercase tracking-wider">Concurrents</span>
-          </div>
-          <CompetitorBar data={competitors} />
-        </Card>
-      </div>
-
       {/* Chart & Distribution */}
       <div className="grid grid-cols-12 gap-4 mb-4">
         <Card className="col-span-8 !p-0 overflow-hidden" glowColor="rgba(0, 201, 167, 0.04)">
@@ -923,56 +745,55 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Attention & Recent Reviews */}
+      {/* Feedbacks interceptés & Recent Reviews */}
       <div className="grid grid-cols-12 gap-4">
-        {attentionReviews.length > 0 && (
-          <Card className="col-span-4" glowColor="rgba(239, 68, 68, 0.08)">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 rounded-xl bg-red-500/15">
-                <AlertCircle size={16} className="text-red-400" />
+        {/* Widget Feedbacks interceptés */}
+        <Card className="col-span-4" glowColor="rgba(249, 115, 22, 0.08)">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-orange-500/15">
+                <MessageSquareWarning size={16} className="text-orange-400" />
               </div>
-              <span className="text-[11px] font-medium text-white/40 uppercase tracking-wider">Attention</span>
-              <motion.span
-                className="ml-auto px-2 py-0.5 text-[10px] font-bold bg-red-500/15 text-red-400 rounded-full"
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
+              <span className="text-[11px] font-medium text-white/40 uppercase tracking-wider">Feedbacks interceptés</span>
+            </div>
+            <span className="px-2 py-0.5 text-[10px] font-bold bg-orange-500/15 text-orange-400 rounded-full">
+              {interceptedFeedbacks.length}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {interceptedFeedbacks.slice(0, 3).map((feedback) => (
+              <motion.div
+                key={feedback.id}
+                whileHover={{ x: 4 }}
+                onClick={() => setSelectedFeedback(feedback)}
+                className="flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02] hover:bg-orange-500/5 cursor-pointer transition-colors border border-transparent hover:border-orange-500/20"
               >
-                {attentionReviews.length}
-              </motion.span>
-            </div>
-            <div className="space-y-2">
-              {attentionReviews.slice(0, 2).map((review) => (
-                <motion.div
-                  key={review.id}
-                  whileHover={{ x: 4 }}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] hover:bg-red-500/5 cursor-pointer transition-colors border border-transparent hover:border-red-500/20"
-                >
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-500/20 to-red-600/10 flex items-center justify-center text-[11px] font-bold text-red-400">
-                    {review.name.split(" ").map(n => n[0]).join("")}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-white/60 truncate">{review.text}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <StarRating rating={review.rating} size={10} />
-                      <span className="text-[10px] text-white/20">{review.time}</span>
-                    </div>
-                  </div>
-                  <ChevronRight size={14} className="text-white/15" />
-                </motion.div>
-              ))}
-            </div>
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} size={10} className={star <= feedback.rating ? "text-orange-400 fill-orange-400" : "text-white/10"} />
+                  ))}
+                </div>
+                <span className="px-1.5 py-0.5 text-[9px] font-medium bg-white/[0.06] text-white/50 rounded">
+                  {feedback.category}
+                </span>
+                <span className="text-[10px] text-white/30 ml-auto">{feedback.date}</span>
+                <ChevronRight size={12} className="text-white/15" />
+              </motion.div>
+            ))}
+          </div>
+          {interceptedFeedbacks.length > 3 && (
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
-              className="w-full mt-4 py-2.5 text-xs font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/15 rounded-xl transition-all border border-red-500/20 flex items-center justify-center gap-2"
+              onClick={() => setShowAllFeedbacks(true)}
+              className="w-full mt-3 py-2 text-[11px] font-medium text-white/40 hover:text-white/60 transition-colors flex items-center justify-center gap-1"
             >
-              Répondre maintenant
-              <ArrowRight size={14} />
+              Voir tout <ArrowUpRight size={12} />
             </motion.button>
-          </Card>
-        )}
+          )}
+        </Card>
 
-        <Card className={attentionReviews.length > 0 ? "col-span-8" : "col-span-12"}>
+        <Card className="col-span-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-xl bg-white/[0.04]">
@@ -1025,6 +846,158 @@ export default function DashboardPage() {
           </div>
         </Card>
       </div>
+
+      {/* Modal détail feedback */}
+      <AnimatePresence>
+        {selectedFeedback && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setSelectedFeedback(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl bg-[#0f0f10] border border-white/[0.1] shadow-2xl overflow-hidden"
+            >
+              <div className="p-5 border-b border-white/[0.06]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-orange-500/15">
+                      <MessageSquareWarning size={18} className="text-orange-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white">Feedback intercepté</h3>
+                      <p className="text-[11px] text-white/40">{selectedFeedback.date}</p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setSelectedFeedback(null)}
+                    className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.06] transition-all"
+                  >
+                    <X size={18} />
+                  </motion.button>
+                </div>
+              </div>
+              <div className="p-5 space-y-4">
+                {/* Note & Catégorie */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star key={star} size={16} className={star <= selectedFeedback.rating ? "text-orange-400 fill-orange-400" : "text-white/10"} />
+                    ))}
+                  </div>
+                  <span className="px-2 py-1 text-xs font-medium bg-white/[0.06] text-white/60 rounded-lg">
+                    {selectedFeedback.category}
+                  </span>
+                </div>
+                {/* Commentaire */}
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                  <p className="text-sm text-white/70 leading-relaxed">{selectedFeedback.comment}</p>
+                </div>
+                {/* Email */}
+                {selectedFeedback.email ? (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <Mail size={14} className="text-emerald-400" />
+                    <span className="text-xs text-emerald-400">{selectedFeedback.email}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                    <Mail size={14} className="text-white/30" />
+                    <span className="text-xs text-white/30">Email non fourni</span>
+                  </div>
+                )}
+              </div>
+              {/* Actions */}
+              {selectedFeedback.email && (
+                <div className="p-5 border-t border-white/[0.06]">
+                  <motion.a
+                    href={`mailto:${selectedFeedback.email}?subject=Suite à votre retour`}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold bg-[#00C9A7] text-black hover:bg-[#00E4BC] transition-all"
+                  >
+                    <Mail size={16} />
+                    Répondre par email
+                  </motion.a>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal voir tout */}
+      <AnimatePresence>
+        {showAllFeedbacks && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowAllFeedbacks(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg max-h-[80vh] rounded-2xl bg-[#0f0f10] border border-white/[0.1] shadow-2xl overflow-hidden flex flex-col"
+            >
+              <div className="p-5 border-b border-white/[0.06] shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-orange-500/15">
+                      <MessageSquareWarning size={18} className="text-orange-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white">Tous les feedbacks</h3>
+                      <p className="text-[11px] text-white/40">{interceptedFeedbacks.length} feedbacks interceptés</p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowAllFeedbacks(false)}
+                    className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.06] transition-all"
+                  >
+                    <X size={18} />
+                  </motion.button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-auto p-4 space-y-2">
+                {interceptedFeedbacks.map((feedback) => (
+                  <motion.div
+                    key={feedback.id}
+                    whileHover={{ x: 4 }}
+                    onClick={() => { setShowAllFeedbacks(false); setSelectedFeedback(feedback); }}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] hover:bg-orange-500/5 cursor-pointer transition-colors border border-transparent hover:border-orange-500/20"
+                  >
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star key={star} size={11} className={star <= feedback.rating ? "text-orange-400 fill-orange-400" : "text-white/10"} />
+                      ))}
+                    </div>
+                    <span className="px-1.5 py-0.5 text-[9px] font-medium bg-white/[0.06] text-white/50 rounded">
+                      {feedback.category}
+                    </span>
+                    <p className="flex-1 text-xs text-white/50 truncate">{feedback.comment}</p>
+                    {feedback.email && <Mail size={12} className="text-emerald-400/60" />}
+                    <span className="text-[10px] text-white/30">{feedback.date}</span>
+                    <ChevronRight size={12} className="text-white/15" />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
