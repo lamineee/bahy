@@ -1,45 +1,193 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import {
-  Star,
   Search,
-  ChevronDown,
-  MessageSquare,
-  Check,
+  MessageSquareWarning,
   Clock,
+  CheckCircle2,
+  AlertCircle,
+  X,
+  Mail,
+  Phone,
+  Gift,
   Sparkles,
   Send,
-  X,
-  ArrowLeft,
-  ExternalLink,
-  Flag,
-  ThumbsUp,
-  Calendar,
-  Loader2,
-  TrendingUp,
-  TrendingDown,
-  Zap,
-  AlertCircle,
-  Filter,
-  RotateCcw,
-  Copy,
-  Wand2,
-  History,
   ChevronRight,
-  MessageCircle,
-  Award,
-  Target,
-  Flame,
-  RefreshCw,
-  MoreVertical,
-  Share2,
-  Trash2,
-  Edit3,
-  Bot,
+  MoreHorizontal,
+  Archive,
+  Download,
+  Check,
+  Star,
+  ArrowLeft,
+  User,
+  Calendar,
+  MessageSquare,
+  Eye,
+  PhoneCall,
+  PartyPopper,
+  Loader2,
+  StickyNote,
+  Plus,
+  Command,
+  Filter,
+  TrendingUp,
+  Inbox,
+  CheckCheck,
+  Timer,
 } from "lucide-react"
+
+// ============================================
+// TYPES
+// ============================================
+type FeedbackStatus = "pending" | "in_progress" | "resolved"
+
+interface TimelineEvent {
+  id: number
+  type: "received" | "viewed" | "contacted" | "resolved"
+  date: string
+  note?: string
+}
+
+interface Feedback {
+  id: number
+  clientName: string
+  clientEmail: string
+  clientPhone?: string
+  rating: number
+  message: string
+  date: string
+  dateRelative: string
+  status: FeedbackStatus
+  category?: string
+  timeline: TimelineEvent[]
+  internalNotes: string[]
+}
+
+// ============================================
+// DATA
+// ============================================
+const feedbacksData: Feedback[] = [
+  {
+    id: 1,
+    clientName: "Marie Lefebvre",
+    clientEmail: "marie.lefebvre@gmail.com",
+    clientPhone: "06 12 34 56 78",
+    rating: 2,
+    message: "Attente beaucoup trop longue, plus de 45 minutes avant d'être servi. Le personnel semblait complètement débordé et personne ne s'est excusé. Très déçue car on m'avait recommandé cet établissement.",
+    date: "2024-01-15",
+    dateRelative: "Il y a 2 heures",
+    status: "pending",
+    category: "Attente",
+    timeline: [
+      { id: 1, type: "received", date: "Il y a 2 heures" }
+    ],
+    internalNotes: []
+  },
+  {
+    id: 2,
+    clientName: "Thomas Moreau",
+    clientEmail: "t.moreau@outlook.fr",
+    rating: 1,
+    message: "Prix exorbitants pour une qualité plus que moyenne. 45€ pour un plat qui ne les vaut clairement pas. Je ne recommande absolument pas.",
+    date: "2024-01-15",
+    dateRelative: "Il y a 5 heures",
+    status: "pending",
+    category: "Prix",
+    timeline: [
+      { id: 1, type: "received", date: "Il y a 5 heures" }
+    ],
+    internalNotes: []
+  },
+  {
+    id: 3,
+    clientName: "Sophie Bernard",
+    clientEmail: "sophie.b@gmail.com",
+    clientPhone: "07 98 76 54 32",
+    rating: 2,
+    message: "Service désagréable. Le serveur était condescendant et pressé. Ambiance gâchée pour notre anniversaire de mariage.",
+    date: "2024-01-14",
+    dateRelative: "Hier",
+    status: "in_progress",
+    category: "Service",
+    timeline: [
+      { id: 1, type: "received", date: "Hier" },
+      { id: 2, type: "viewed", date: "Il y a 20 heures" },
+      { id: 3, type: "contacted", date: "Il y a 18 heures", note: "Email d'excuses envoyé" }
+    ],
+    internalNotes: ["Client fidèle - 3ème visite", "Proposer -30% prochaine visite"]
+  },
+  {
+    id: 4,
+    clientName: "Lucas Petit",
+    clientEmail: "lucas.petit@hotmail.com",
+    rating: 3,
+    message: "Correct mais sans plus. La propreté des toilettes laisse à désirer. Dommage car le reste était bien.",
+    date: "2024-01-14",
+    dateRelative: "Hier",
+    status: "in_progress",
+    category: "Propreté",
+    timeline: [
+      { id: 1, type: "received", date: "Hier" },
+      { id: 2, type: "viewed", date: "Il y a 22 heures" }
+    ],
+    internalNotes: ["Signalé à l'équipe d'entretien"]
+  },
+  {
+    id: 5,
+    clientName: "Emma Dubois",
+    clientEmail: "emma.dubois@icloud.com",
+    clientPhone: "06 45 67 89 01",
+    rating: 2,
+    message: "Réservation non prise en compte, nous avons dû attendre 30 minutes malgré notre confirmation. Très frustrant avec des enfants fatigués.",
+    date: "2024-01-13",
+    dateRelative: "Il y a 2 jours",
+    status: "resolved",
+    category: "Réservation",
+    timeline: [
+      { id: 1, type: "received", date: "Il y a 2 jours" },
+      { id: 2, type: "viewed", date: "Il y a 2 jours" },
+      { id: 3, type: "contacted", date: "Il y a 1 jour", note: "Appel téléphonique" },
+      { id: 4, type: "resolved", date: "Il y a 1 jour", note: "Invitation offerte pour la famille" }
+    ],
+    internalNotes: ["Problème système résa identifié", "Client reconquis - reviendra"]
+  },
+  {
+    id: 6,
+    clientName: "Antoine Martin",
+    clientEmail: "a.martin@gmail.com",
+    rating: 1,
+    message: "Commande complètement erronée et attitude défensive du manager quand j'ai voulu signaler le problème. Inacceptable.",
+    date: "2024-01-12",
+    dateRelative: "Il y a 3 jours",
+    status: "resolved",
+    category: "Service",
+    timeline: [
+      { id: 1, type: "received", date: "Il y a 3 jours" },
+      { id: 2, type: "viewed", date: "Il y a 3 jours" },
+      { id: 3, type: "contacted", date: "Il y a 2 jours", note: "Email personnalisé du directeur" },
+      { id: 4, type: "resolved", date: "Il y a 1 jour", note: "Bon de 50€ offert" }
+    ],
+    internalNotes: ["Formation équipe prévue", "Suivi avec le manager concerné"]
+  },
+  {
+    id: 7,
+    clientName: "Julie Rousseau",
+    clientEmail: "julie.r@yahoo.fr",
+    rating: 3,
+    message: "Bruit excessif, impossible d'avoir une conversation normale. La musique était beaucoup trop forte.",
+    date: "2024-01-11",
+    dateRelative: "Il y a 4 jours",
+    status: "pending",
+    category: "Ambiance",
+    timeline: [
+      { id: 1, type: "received", date: "Il y a 4 jours" }
+    ],
+    internalNotes: []
+  }
+]
 
 // ============================================
 // ANIMATIONS
@@ -48,339 +196,165 @@ const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.05, delayChildren: 0.1 }
+    transition: { staggerChildren: 0.04, delayChildren: 0.1 }
   }
 }
 
 const item = {
-  hidden: { opacity: 0, y: 16, filter: "blur(10px)" },
-  show: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { type: "spring", stiffness: 150, damping: 20 }
-  }
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } }
 }
 
-const slideIn = {
-  hidden: { opacity: 0, x: 40 },
-  show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 100, damping: 20 } },
-  exit: { opacity: 0, x: 40, transition: { duration: 0.2 } }
+const slidePanel = {
+  hidden: { x: "100%", opacity: 0 },
+  show: { x: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 30 } },
+  exit: { x: "100%", opacity: 0, transition: { duration: 0.2 } }
 }
 
 // ============================================
-// TYPES
+// CONFETTI COMPONENT
 // ============================================
-type ReviewSource = "google" | "facebook" | "tripadvisor"
-type FilterType = "all" | "positive" | "negative" | "unanswered"
-type SortType = "recent" | "oldest" | "best" | "worst"
+function Confetti({ active }: { active: boolean }) {
+  if (!active) return null
 
-interface ReviewMessage {
-  id: number
-  type: "review" | "response"
-  text: string
-  date: string
-  dateRelative: string
-}
-
-interface Review {
-  id: number
-  name: string
-  avatar?: string
-  rating: number
-  text: string
-  date: string
-  dateRelative: string
-  responded: boolean
-  response?: string
-  responseDate?: string
-  source: ReviewSource
-  helpful?: number
-  verified?: boolean
-  history?: ReviewMessage[]
-}
-
-// ============================================
-// DATA
-// ============================================
-const reviewsData: Review[] = [
-  {
-    id: 1,
-    name: "Marie Dupont",
-    rating: 5,
-    text: "Service exceptionnel ! L'équipe est très professionnelle et à l'écoute. Je recommande vivement cet établissement à tous ceux qui recherchent la qualité. Une expérience vraiment mémorable.",
-    date: "2024-01-15",
-    dateRelative: "Il y a 2 heures",
-    responded: true,
-    response: "Merci beaucoup Marie pour ce retour chaleureux ! Nous sommes ravis que votre expérience ait été à la hauteur de vos attentes. Au plaisir de vous revoir !",
-    responseDate: "Il y a 1 heure",
-    source: "google",
-    helpful: 12,
-    verified: true,
-    history: [
-      { id: 1, type: "review", text: "Service exceptionnel ! L'équipe est très professionnelle et à l'écoute.", date: "2024-01-15", dateRelative: "Il y a 2 heures" },
-      { id: 2, type: "response", text: "Merci beaucoup Marie pour ce retour chaleureux !", date: "2024-01-15", dateRelative: "Il y a 1 heure" },
-    ]
-  },
-  {
-    id: 2,
-    name: "Thomas Bernard",
-    rating: 5,
-    text: "Très professionnel, équipe au top. Rapport qualité-prix excellent. Je reviendrai sans hésiter !",
-    date: "2024-01-15",
-    dateRelative: "Il y a 5 heures",
-    responded: true,
-    response: "Merci Thomas ! Votre satisfaction est notre priorité. À très bientôt !",
-    responseDate: "Il y a 3 heures",
-    source: "google",
-    helpful: 8,
-    verified: true,
-  },
-  {
-    id: 3,
-    name: "Sophie Martin",
-    rating: 4,
-    text: "Bonne expérience dans l'ensemble. Le service était rapide et efficace. Petit bémol sur l'attente à l'entrée mais rien de grave. Je recommande quand même.",
-    date: "2024-01-14",
-    dateRelative: "Hier",
-    responded: false,
-    source: "facebook",
-    helpful: 3,
-  },
-  {
-    id: 4,
-    name: "Lucas Petit",
-    rating: 2,
-    text: "Déçu par l'attente, plus de 30 minutes avant d'être servi. Le personnel semblait débordé. À améliorer sérieusement si vous voulez fidéliser vos clients.",
-    date: "2024-01-14",
-    dateRelative: "Hier",
-    responded: false,
-    source: "google",
-  },
-  {
-    id: 5,
-    name: "Emma Wilson",
-    rating: 5,
-    text: "Absolutely amazing experience! The staff went above and beyond to make our visit memorable. Will definitely come back and recommend to all my friends!",
-    date: "2024-01-13",
-    dateRelative: "Il y a 2 jours",
-    responded: true,
-    response: "Thank you so much Emma! We're thrilled you had such a great experience. See you soon!",
-    responseDate: "Il y a 1 jour",
-    source: "tripadvisor",
-    helpful: 15,
-    verified: true,
-  },
-  {
-    id: 6,
-    name: "Pierre Durand",
-    rating: 1,
-    text: "Très déçu. Service lent, personnel peu aimable. Je ne recommande absolument pas. Une expérience à oublier.",
-    date: "2024-01-12",
-    dateRelative: "Il y a 3 jours",
-    responded: false,
-    source: "google",
-  },
-  {
-    id: 7,
-    name: "Julie Moreau",
-    rating: 5,
-    text: "Parfait ! Exactement ce que je cherchais. Merci pour votre professionnalisme et votre accueil chaleureux.",
-    date: "2024-01-11",
-    dateRelative: "Il y a 4 jours",
-    responded: true,
-    response: "Merci Julie, c'est un plaisir de vous avoir accueillie !",
-    responseDate: "Il y a 3 jours",
-    source: "google",
-    helpful: 6,
-  },
-  {
-    id: 8,
-    name: "Antoine Leroy",
-    rating: 3,
-    text: "Correct sans plus. Le service est bon mais rien d'exceptionnel. Prix un peu élevés pour la prestation.",
-    date: "2024-01-10",
-    dateRelative: "Il y a 5 jours",
-    responded: false,
-    source: "facebook",
-  },
-  {
-    id: 9,
-    name: "Camille Dubois",
-    rating: 4,
-    text: "Très bonne adresse ! J'y retournerai avec plaisir. L'ambiance est agréable et le service attentionné.",
-    date: "2024-01-09",
-    dateRelative: "Il y a 6 jours",
-    responded: true,
-    response: "Merci Camille, à très bientôt !",
-    responseDate: "Il y a 5 jours",
-    source: "google",
-    verified: true,
-  },
-  {
-    id: 10,
-    name: "Marc Fontaine",
-    rating: 5,
-    text: "Expérience parfaite du début à la fin. Le personnel est aux petits soins. Un vrai bonheur !",
-    date: "2024-01-08",
-    dateRelative: "Il y a 1 semaine",
-    responded: false,
-    source: "google",
-    helpful: 9,
-    verified: true,
-  },
-]
-
-// ============================================
-// COMPONENTS
-// ============================================
-
-function AnimatedNumber({ value, decimals = 0, suffix = "" }: {
-  value: number; decimals?: number; suffix?: string
-}) {
-  const [display, setDisplay] = useState(0)
-
-  useEffect(() => {
-    const duration = 1200
-    const steps = 30
-    const increment = value / steps
-    let current = 0
-
-    const timer = setInterval(() => {
-      current += increment
-      if (current >= value) {
-        setDisplay(value)
-        clearInterval(timer)
-      } else {
-        setDisplay(current)
-      }
-    }, duration / steps)
-
-    return () => clearInterval(timer)
-  }, [value])
-
-  return <>{display.toFixed(decimals)}{suffix}</>
-}
-
-function StarRating({ rating, size = 14, animated = false }: { rating: number; size?: number; animated?: boolean }) {
   return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((star, i) => (
+    <div className="fixed inset-0 pointer-events-none z-50">
+      {[...Array(50)].map((_, i) => (
         <motion.div
-          key={star}
-          initial={animated ? { opacity: 0, scale: 0, rotate: -180 } : false}
-          animate={animated ? { opacity: 1, scale: 1, rotate: 0 } : false}
-          transition={animated ? { delay: i * 0.08, type: "spring" } : undefined}
-        >
-          <Star
-            size={size}
-            className={star <= rating
-              ? "text-[#EAB308] fill-[#EAB308] drop-shadow-[0_0_3px_rgba(234,179,8,0.4)]"
-              : "text-white/10"
-            }
-          />
-        </motion.div>
+          key={i}
+          className="absolute w-2 h-2 rounded-full"
+          style={{
+            left: `${Math.random() * 100}%`,
+            backgroundColor: ["#00C9A7", "#8B5CF6", "#F59E0B", "#EC4899", "#3B82F6"][Math.floor(Math.random() * 5)]
+          }}
+          initial={{ y: -20, opacity: 1, scale: 1 }}
+          animate={{
+            y: window.innerHeight + 20,
+            opacity: 0,
+            scale: 0,
+            rotate: Math.random() * 360
+          }}
+          transition={{
+            duration: 2 + Math.random() * 2,
+            delay: Math.random() * 0.5,
+            ease: "easeOut"
+          }}
+        />
       ))}
     </div>
   )
 }
 
-function SourceIcon({ source, size = 16 }: { source: ReviewSource; size?: number }) {
-  const icons = {
-    google: (
-      <svg className="shrink-0" style={{ width: size, height: size }} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-    ),
-    facebook: (
-      <svg className="shrink-0 text-[#1877F2]" style={{ width: size, height: size }} viewBox="0 0 24 24" fill="currentColor">
-        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-      </svg>
-    ),
-    tripadvisor: (
-      <svg className="shrink-0 text-[#00AF87]" style={{ width: size, height: size }} viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="6.5" cy="13.5" r="3" fill="currentColor"/>
-        <circle cx="17.5" cy="13.5" r="3" fill="currentColor"/>
-        <path d="M12 5C7 5 3 8 2 12h3c1-2 3-4 7-4s6 2 7 4h3c-1-4-5-7-10-7z" fill="currentColor"/>
-      </svg>
-    ),
-  }
-  return icons[source]
-}
+// ============================================
+// TOAST COMPONENT
+// ============================================
+function Toast({ message, visible, onClose }: { message: string; visible: boolean; onClose: () => void }) {
+  useEffect(() => {
+    if (visible) {
+      const timer = setTimeout(onClose, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [visible, onClose])
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  suffix = "",
-  trend,
-  trendValue,
-  color,
-  glowColor
-}: {
-  icon: React.ElementType
-  label: string
-  value: number
-  suffix?: string
-  trend?: "up" | "down"
-  trendValue?: string
-  color: string
-  glowColor: string
-}) {
   return (
-    <motion.div
-      variants={item}
-      whileHover={{ y: -2, transition: { duration: 0.2 } }}
-      className="group relative rounded-2xl bg-white/[0.02] border border-white/[0.06] p-5
-        transition-all duration-300 hover:bg-white/[0.04] hover:border-white/[0.1]
-        hover:shadow-2xl hover:shadow-black/20"
-    >
-      <div
-        className="absolute -inset-px rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"
-        style={{ background: glowColor }}
-      />
-      <div className="relative">
-        <div className="flex items-center justify-between mb-3">
-          <div className="p-2.5 rounded-xl" style={{ backgroundColor: `${color}20` }}>
-            <Icon size={18} style={{ color }} />
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{ opacity: 0, y: 50, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.9 }}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#1a1a1b] border border-white/10 shadow-2xl"
+        >
+          <div className="w-8 h-8 rounded-lg bg-[#00C9A7]/20 flex items-center justify-center">
+            <Check size={16} className="text-[#00C9A7]" />
           </div>
-          {trend && trendValue && (
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold ${
-              trend === "up"
-                ? "bg-emerald-500/15 text-emerald-400"
-                : "bg-red-500/15 text-red-400"
-            }`}>
-              {trend === "up" ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-              {trendValue}
-            </div>
-          )}
-        </div>
-        <p className="text-[11px] font-medium text-white/40 uppercase tracking-wider mb-1">{label}</p>
-        <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-bold text-white">
-            <AnimatedNumber value={value} decimals={suffix === "%" ? 0 : suffix === "/5" ? 1 : 0} />
-          </span>
-          <span className="text-lg text-white/30">{suffix}</span>
-        </div>
-      </div>
-    </motion.div>
+          <span className="text-sm text-white/80">{message}</span>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
-function FilterPill({
-  active,
-  children,
-  count,
-  color,
-  onClick
-}: {
+// ============================================
+// STAR RATING COMPONENT
+// ============================================
+function StarRating({ rating, size = 14 }: { rating: number; size?: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3].map((star) => (
+        <Star
+          key={star}
+          size={size}
+          className={star <= rating
+            ? "text-amber-400 fill-amber-400"
+            : "text-white/10"
+          }
+        />
+      ))}
+    </div>
+  )
+}
+
+// ============================================
+// STATUS BADGE COMPONENT
+// ============================================
+function StatusBadge({ status }: { status: FeedbackStatus }) {
+  const config = {
+    pending: {
+      label: "À traiter",
+      icon: AlertCircle,
+      className: "bg-red-500/10 text-red-400 border-red-500/20"
+    },
+    in_progress: {
+      label: "En cours",
+      icon: Clock,
+      className: "bg-amber-500/10 text-amber-400 border-amber-500/20"
+    },
+    resolved: {
+      label: "Résolu",
+      icon: CheckCircle2,
+      className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+    }
+  }
+
+  const { label, icon: Icon, className } = config[status]
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg border ${className}`}>
+      <Icon size={12} />
+      {label}
+    </span>
+  )
+}
+
+// ============================================
+// STAT CARD COMPONENT
+// ============================================
+function StatCard({ icon: Icon, label, value, color }: {
+  icon: React.ElementType
+  label: string
+  value: number
+  color: string
+}) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+      <div className="p-2 rounded-lg" style={{ backgroundColor: `${color}15` }}>
+        <Icon size={16} style={{ color }} />
+      </div>
+      <div>
+        <p className="text-xl font-bold text-white">{value}</p>
+        <p className="text-[11px] text-white/40">{label}</p>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// FILTER PILL COMPONENT
+// ============================================
+function FilterPill({ active, children, onClick }: {
   active: boolean
   children: React.ReactNode
-  count?: number
-  color?: string
   onClick: () => void
 }) {
   return (
@@ -388,567 +362,571 @@ function FilterPill({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+      className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all ${
         active
-          ? "bg-[#00C9A7]/15 text-[#00C9A7] border border-[#00C9A7]/30 shadow-lg shadow-[#00C9A7]/10"
-          : "bg-white/[0.03] text-white/50 border border-white/[0.06] hover:bg-white/[0.06] hover:text-white/70 hover:border-white/[0.1]"
+          ? "text-[#00C9A7]"
+          : "text-white/40 hover:text-white/60"
       }`}
     >
       {active && (
         <motion.div
-          layoutId="activeFilter"
-          className="absolute inset-0 rounded-xl bg-[#00C9A7]/10 border border-[#00C9A7]/20"
-          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+          layoutId="activeFilterPill"
+          className="absolute inset-0 rounded-lg bg-[#00C9A7]/10 border border-[#00C9A7]/20"
+          transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
         />
       )}
       <span className="relative z-10">{children}</span>
-      {count !== undefined && (
-        <span className={`relative z-10 px-2 py-0.5 rounded-md text-xs font-bold ${
-          active ? "bg-[#00C9A7]/25" : "bg-white/[0.08]"
-        }`}>
-          {count}
-        </span>
-      )}
     </motion.button>
   )
 }
 
-function ReviewCard({
-  review,
-  selected,
-  onClick,
-  onRespond
-}: {
-  review: Review
+// ============================================
+// FEEDBACK ROW COMPONENT
+// ============================================
+function FeedbackRow({ feedback, selected, onSelect, showCheckbox }: {
+  feedback: Feedback
   selected: boolean
-  onClick: () => void
-  onRespond: () => void
+  onSelect: () => void
+  showCheckbox: boolean
 }) {
-  const [showMenu, setShowMenu] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
   return (
     <motion.div
-      layout
       variants={item}
-      whileHover={{ x: 4 }}
-      onClick={onClick}
-      className={`group relative p-5 rounded-2xl border cursor-pointer transition-all duration-300 ${
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onSelect}
+      className={`group relative flex items-center gap-4 px-4 py-4 rounded-xl cursor-pointer transition-all duration-200 ${
         selected
-          ? "bg-[#00C9A7]/[0.08] border-[#00C9A7]/30 shadow-lg shadow-[#00C9A7]/5"
-          : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1]"
+          ? "bg-[#00C9A7]/[0.08] border border-[#00C9A7]/20"
+          : "bg-white/[0.01] border border-transparent hover:bg-white/[0.03] hover:border-white/[0.06]"
       }`}
     >
-      {/* Urgency indicator for negative reviews */}
-      {review.rating <= 2 && !review.responded && (
-        <div className="absolute -left-px top-4 bottom-4 w-1 rounded-full bg-gradient-to-b from-red-500 to-orange-500" />
+      {/* Urgency indicator */}
+      {feedback.status === "pending" && feedback.rating <= 2 && (
+        <div className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full bg-gradient-to-b from-red-500 to-orange-500" />
       )}
 
-      <div className="flex items-start gap-4">
-        {/* Avatar */}
-        <div className="relative">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-sm font-bold transition-transform group-hover:scale-105 ${
-            review.rating >= 4
-              ? "bg-gradient-to-br from-emerald-500/25 to-emerald-600/15 text-emerald-400 shadow-lg shadow-emerald-500/10"
-              : review.rating === 3
-              ? "bg-gradient-to-br from-amber-500/25 to-amber-600/15 text-amber-400 shadow-lg shadow-amber-500/10"
-              : "bg-gradient-to-br from-red-500/25 to-red-600/15 text-red-400 shadow-lg shadow-red-500/10"
-          }`}>
-            {review.name.split(" ").map(n => n[0]).join("")}
-          </div>
-          {review.verified && (
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#0a0a0b] flex items-center justify-center">
-              <div className="w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center">
-                <Check size={8} className="text-white" strokeWidth={3} />
+      {/* Checkbox */}
+      <div className={`w-5 transition-opacity duration-200 ${showCheckbox || hovered ? "opacity-100" : "opacity-0"}`}>
+        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+          selected
+            ? "bg-[#00C9A7] border-[#00C9A7]"
+            : "border-white/20 hover:border-white/40"
+        }`}>
+          {selected && <Check size={12} className="text-black" />}
+        </div>
+      </div>
+
+      {/* Avatar */}
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-semibold shrink-0 ${
+        feedback.rating === 1
+          ? "bg-red-500/15 text-red-400"
+          : feedback.rating === 2
+          ? "bg-orange-500/15 text-orange-400"
+          : "bg-amber-500/15 text-amber-400"
+      }`}>
+        {feedback.clientName.split(" ").map(n => n[0]).join("")}
+      </div>
+
+      {/* Client info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-sm font-medium text-white">{feedback.clientName}</span>
+          {feedback.category && (
+            <span className="px-2 py-0.5 text-[10px] font-medium text-white/40 bg-white/[0.04] rounded">
+              {feedback.category}
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-white/40 truncate">{feedback.message}</p>
+      </div>
+
+      {/* Rating */}
+      <div className="shrink-0">
+        <StarRating rating={feedback.rating} size={12} />
+      </div>
+
+      {/* Date */}
+      <div className="shrink-0 w-24 text-right">
+        <span className="text-xs text-white/30">{feedback.dateRelative}</span>
+      </div>
+
+      {/* Status */}
+      <div className="shrink-0">
+        <StatusBadge status={feedback.status} />
+      </div>
+
+      {/* Arrow */}
+      <ChevronRight size={16} className={`shrink-0 text-white/20 transition-all ${
+        hovered ? "translate-x-1 text-white/40" : ""
+      }`} />
+    </motion.div>
+  )
+}
+
+// ============================================
+// TIMELINE COMPONENT
+// ============================================
+function Timeline({ events }: { events: TimelineEvent[] }) {
+  const iconMap = {
+    received: { icon: Inbox, color: "#6B7280" },
+    viewed: { icon: Eye, color: "#8B5CF6" },
+    contacted: { icon: PhoneCall, color: "#3B82F6" },
+    resolved: { icon: CheckCircle2, color: "#00C9A7" }
+  }
+
+  const labelMap = {
+    received: "Feedback reçu",
+    viewed: "Consulté",
+    contacted: "Client contacté",
+    resolved: "Résolu"
+  }
+
+  return (
+    <div className="relative space-y-4">
+      {/* Vertical line */}
+      <div className="absolute left-[11px] top-2 bottom-2 w-px bg-gradient-to-b from-white/10 via-white/5 to-transparent" />
+
+      {events.map((event, index) => {
+        const { icon: Icon, color } = iconMap[event.type]
+        return (
+          <motion.div
+            key={event.id}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="relative flex items-start gap-3"
+          >
+            <div
+              className="relative z-10 w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+              style={{ backgroundColor: `${color}20` }}
+            >
+              <Icon size={12} style={{ color }} />
+            </div>
+            <div className="flex-1 pt-0.5">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-white/70">{labelMap[event.type]}</span>
+                <span className="text-xs text-white/30">{event.date}</span>
               </div>
+              {event.note && (
+                <p className="text-xs text-white/40 mt-1">{event.note}</p>
+              )}
+            </div>
+          </motion.div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ============================================
+// DETAIL PANEL COMPONENT
+// ============================================
+function DetailPanel({
+  feedback,
+  onClose,
+  onStatusChange,
+  onAddNote
+}: {
+  feedback: Feedback
+  onClose: () => void
+  onStatusChange: (status: FeedbackStatus) => void
+  onAddNote: (note: string) => void
+}) {
+  const [newNote, setNewNote] = useState("")
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedResponse, setGeneratedResponse] = useState("")
+  const [showAIModal, setShowAIModal] = useState(false)
+
+  const handleGenerateAI = async () => {
+    setIsGenerating(true)
+    setShowAIModal(true)
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    const responses: Record<string, string> = {
+      "Attente": `Cher(e) ${feedback.clientName.split(" ")[0]},\n\nNous vous présentons nos sincères excuses pour l'attente que vous avez subie lors de votre visite. Ce n'est absolument pas représentatif du service que nous souhaitons offrir.\n\nNous avons depuis renforcé notre équipe aux heures de pointe pour éviter que cette situation ne se reproduise.\n\nEn guise de compensation, nous aimerions vous offrir un bon de -30% sur votre prochaine visite. Nous espérons sincèrement avoir l'opportunité de vous faire changer d'avis.\n\nCordialement`,
+      "Prix": `Cher(e) ${feedback.clientName.split(" ")[0]},\n\nMerci d'avoir pris le temps de nous faire part de votre ressenti concernant nos tarifs.\n\nNos prix reflètent notre engagement pour des produits de qualité et un service irréprochable. Nous comprenons cependant que cela puisse ne pas correspondre à toutes les attentes.\n\nNous serions ravis de vous accueillir à nouveau et de vous faire découvrir notre menu découverte, plus accessible, qui saura peut-être mieux vous convenir.\n\nCordialement`,
+      "Service": `Cher(e) ${feedback.clientName.split(" ")[0]},\n\nNous sommes profondément désolés pour l'expérience que vous avez vécue. Le comportement que vous décrivez est inacceptable et ne correspond pas à nos valeurs.\n\nNous avons pris des mesures immédiates avec l'équipe concernée pour que cela ne se reproduise plus.\n\nVotre anniversaire de mariage méritait un moment parfait. Permettez-nous de nous rattraper en vous offrant un dîner complet pour deux personnes.\n\nCordialement`,
+      "default": `Cher(e) ${feedback.clientName.split(" ")[0]},\n\nNous vous remercions d'avoir partagé votre expérience avec nous. Vos retours sont précieux et nous aident à nous améliorer continuellement.\n\nNous sommes sincèrement désolés que votre visite n'ait pas été à la hauteur de vos attentes. Nous prenons vos remarques très au sérieux.\n\nNous aimerions vous offrir une nouvelle expérience et vous prouver notre engagement qualité. Seriez-vous disponible pour en discuter ?\n\nCordialement`
+    }
+
+    setGeneratedResponse(responses[feedback.category || "default"] || responses.default)
+    setIsGenerating(false)
+  }
+
+  const handleAddNote = () => {
+    if (newNote.trim()) {
+      onAddNote(newNote)
+      setNewNote("")
+    }
+  }
+
+  return (
+    <>
+      <motion.div
+        variants={slidePanel}
+        initial="hidden"
+        animate="show"
+        exit="exit"
+        className="h-full flex flex-col bg-[#0a0a0b]"
+      >
+        {/* Header */}
+        <div className="shrink-0 flex items-start justify-between p-6 border-b border-white/[0.06]">
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold ${
+              feedback.rating === 1
+                ? "bg-red-500/15 text-red-400"
+                : feedback.rating === 2
+                ? "bg-orange-500/15 text-orange-400"
+                : "bg-amber-500/15 text-amber-400"
+            }`}>
+              {feedback.clientName.split(" ").map(n => n[0]).join("")}
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white">{feedback.clientName}</h3>
+              <div className="flex items-center gap-3 mt-1">
+                <StarRating rating={feedback.rating} size={14} />
+                <StatusBadge status={feedback.status} />
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-white/40 hover:text-white/60 hover:bg-white/[0.04] transition-all"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Contact info */}
+        <div className="shrink-0 flex items-center gap-4 px-6 py-4 border-b border-white/[0.06]">
+          <div className="flex items-center gap-2 text-sm text-white/50">
+            <Mail size={14} />
+            <span>{feedback.clientEmail}</span>
+          </div>
+          {feedback.clientPhone && (
+            <div className="flex items-center gap-2 text-sm text-white/50">
+              <Phone size={14} />
+              <span>{feedback.clientPhone}</span>
             </div>
           )}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-white">{review.name}</span>
-              <StarRating rating={review.rating} size={13} />
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.04]">
-                <SourceIcon source={review.source} size={12} />
-                <span className="text-[10px] text-white/40 capitalize">{review.source}</span>
-              </div>
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-auto p-6 space-y-6">
+          {/* Feedback message */}
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+            <div className="flex items-center gap-2 mb-3">
+              <MessageSquare size={14} className="text-white/40" />
+              <span className="text-xs font-medium text-white/40">Message du client</span>
+              <span className="text-xs text-white/20">• {feedback.dateRelative}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-white/30">{review.dateRelative}</span>
-              <div className="relative">
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu) }}
-                  className="p-1.5 rounded-lg text-white/20 hover:text-white/50 hover:bg-white/[0.06] transition-all opacity-0 group-hover:opacity-100"
-                >
-                  <MoreVertical size={14} />
-                </button>
-                <AnimatePresence>
-                  {showMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95, y: 8 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: 8 }}
-                      className="absolute right-0 top-full mt-1 w-40 p-1 rounded-xl bg-[#1a1a1b] border border-white/[0.1] shadow-2xl z-50"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-white/60 hover:bg-white/[0.06] hover:text-white transition-all">
-                        <Copy size={12} /> Copier
-                      </button>
-                      <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-white/60 hover:bg-white/[0.06] hover:text-white transition-all">
-                        <Share2 size={12} /> Partager
-                      </button>
-                      <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-white/60 hover:bg-white/[0.06] hover:text-white transition-all">
-                        <Flag size={12} /> Signaler
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+            <p className="text-sm text-white/70 leading-relaxed">{feedback.message}</p>
           </div>
 
-          <p className="text-sm text-white/60 leading-relaxed line-clamp-2 mb-3">{review.text}</p>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {review.responded ? (
-                <span className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-emerald-500/15 text-emerald-400 rounded-lg border border-emerald-500/20">
-                  <Check size={12} />
-                  Répondu
-                </span>
-              ) : (
-                <span className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium bg-amber-500/15 text-amber-400 rounded-lg border border-amber-500/20 animate-pulse">
-                  <Clock size={12} />
-                  À répondre
-                </span>
-              )}
-              {review.helpful && review.helpful > 0 && (
-                <span className="flex items-center gap-1.5 px-2 py-1.5 text-xs text-white/40 bg-white/[0.04] rounded-lg">
-                  <ThumbsUp size={11} />
-                  {review.helpful}
-                </span>
-              )}
-            </div>
-
-            {!review.responded && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={(e) => { e.stopPropagation(); onRespond() }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-[#00C9A7] text-black hover:bg-[#00E4BC] transition-all shadow-lg shadow-[#00C9A7]/20"
-              >
-                <MessageCircle size={13} />
-                Répondre
-              </motion.button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Quick response preview */}
-      {review.responded && review.response && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          className="mt-4 ml-16 p-3 rounded-xl bg-[#00C9A7]/[0.06] border border-[#00C9A7]/10"
-        >
-          <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-5 h-5 rounded-md bg-[#00C9A7]/20 flex items-center justify-center">
-              <MessageSquare size={10} className="text-[#00C9A7]" />
-            </div>
-            <span className="text-[10px] font-medium text-[#00C9A7]">Votre réponse</span>
-            <span className="text-[10px] text-white/20">• {review.responseDate}</span>
-          </div>
-          <p className="text-xs text-white/50 line-clamp-2">{review.response}</p>
-        </motion.div>
-      )}
-    </motion.div>
-  )
-}
-
-function ReviewDetailSidebar({
-  review,
-  onClose,
-}: {
-  review: Review
-  onClose: () => void
-}) {
-  const [response, setResponse] = useState(review.response || "")
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [activeTab, setActiveTab] = useState<"response" | "history">("response")
-  const [generationStyle, setGenerationStyle] = useState<"professional" | "friendly" | "apologetic">("professional")
-
-  const handleGenerateAI = async () => {
-    setIsGenerating(true)
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    const styles = {
-      professional: `Bonjour ${review.name.split(" ")[0]},\n\nNous vous remercions sincèrement pour votre retour. Votre satisfaction est au cœur de nos priorités et nous prenons note de chaque commentaire pour améliorer continuellement nos services.\n\nNous espérons avoir le plaisir de vous accueillir à nouveau.\n\nCordialement,\nL'équipe`,
-      friendly: `Merci beaucoup ${review.name.split(" ")[0]} ! 😊\n\nVotre avis nous fait vraiment plaisir et motive toute l'équipe. C'est grâce à des clients comme vous qu'on se lève chaque matin avec le sourire !\n\nÀ très bientôt !`,
-      apologetic: `Cher(e) ${review.name.split(" ")[0]},\n\nNous sommes sincèrement désolés que votre expérience n'ait pas été à la hauteur de vos attentes. Vos remarques sont très importantes pour nous et nous allons immédiatement prendre des mesures correctives.\n\nNous serions honorés de pouvoir vous offrir une meilleure expérience. N'hésitez pas à nous contacter directement.\n\nAvec nos excuses renouvelées.`
-    }
-
-    setResponse(styles[generationStyle])
-    setIsGenerating(false)
-  }
-
-  return (
-    <motion.div
-      variants={slideIn}
-      initial="hidden"
-      animate="show"
-      exit="exit"
-      className="h-full flex flex-col bg-[#0a0a0b]"
-    >
-      {/* Header */}
-      <div className="shrink-0 flex items-center justify-between p-5 border-b border-white/[0.06]">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold ${
-            review.rating >= 4
-              ? "bg-gradient-to-br from-emerald-500/25 to-emerald-600/15 text-emerald-400"
-              : review.rating === 3
-              ? "bg-gradient-to-br from-amber-500/25 to-amber-600/15 text-amber-400"
-              : "bg-gradient-to-br from-red-500/25 to-red-600/15 text-red-400"
-          }`}>
-            {review.name.split(" ")[0][0]}
-          </div>
+          {/* Timeline */}
           <div>
-            <h3 className="text-sm font-semibold text-white">{review.name}</h3>
-            <div className="flex items-center gap-2 mt-0.5">
-              <StarRating rating={review.rating} size={11} />
-              <span className="text-[10px] text-white/30">• {review.dateRelative}</span>
+            <h4 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4">Historique</h4>
+            <Timeline events={feedback.timeline} />
+          </div>
+
+          {/* Internal notes */}
+          <div>
+            <h4 className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-4">Notes internes</h4>
+            <div className="space-y-2">
+              {feedback.internalNotes.map((note, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-start gap-2 p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]"
+                >
+                  <StickyNote size={14} className="text-amber-400/60 shrink-0 mt-0.5" />
+                  <p className="text-sm text-white/50">{note}</p>
+                </motion.div>
+              ))}
+
+              {/* Add note input */}
+              <div className="flex items-center gap-2 mt-3">
+                <input
+                  type="text"
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddNote()}
+                  placeholder="Ajouter une note..."
+                  className="flex-1 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder-white/25 focus:outline-none focus:border-white/[0.15] transition-all"
+                />
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleAddNote}
+                  disabled={!newNote.trim()}
+                  className="p-2 rounded-lg bg-white/[0.04] text-white/40 hover:bg-white/[0.08] hover:text-white/60 transition-all disabled:opacity-30"
+                >
+                  <Plus size={16} />
+                </motion.button>
+              </div>
             </div>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 rounded-xl text-white/40 hover:text-white/70 hover:bg-white/[0.06] transition-all"
-        >
-          <X size={18} />
-        </button>
-      </div>
 
-      {/* Tabs */}
-      <div className="shrink-0 flex items-center gap-1 p-2 mx-5 mt-4 rounded-xl bg-white/[0.03]">
-        <button
-          onClick={() => setActiveTab("response")}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-medium transition-all ${
-            activeTab === "response"
-              ? "bg-white/[0.08] text-white"
-              : "text-white/40 hover:text-white/60"
-          }`}
-        >
-          <MessageSquare size={14} />
-          Répondre
-        </button>
-        <button
-          onClick={() => setActiveTab("history")}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-medium transition-all ${
-            activeTab === "history"
-              ? "bg-white/[0.08] text-white"
-              : "text-white/40 hover:text-white/60"
-          }`}
-        >
-          <History size={14} />
-          Historique
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-auto p-5 space-y-5">
-        {activeTab === "response" ? (
-          <>
-            {/* Original review */}
-            <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-              <div className="flex items-center gap-2 mb-3">
-                <SourceIcon source={review.source} size={14} />
-                <span className="text-xs text-white/40 capitalize">Avis {review.source}</span>
-                {review.verified && (
-                  <span className="flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-medium bg-blue-500/15 text-blue-400 rounded">
-                    <Check size={8} /> Vérifié
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-white/70 leading-relaxed">{review.text}</p>
-              <div className="flex items-center gap-4 mt-4 pt-4 border-t border-white/[0.04]">
-                <div className="flex items-center gap-1.5 text-xs text-white/30">
-                  <Calendar size={12} />
-                  {review.date}
-                </div>
-                {review.helpful && (
-                  <div className="flex items-center gap-1.5 text-xs text-white/30">
-                    <ThumbsUp size={12} />
-                    {review.helpful} utile{review.helpful > 1 ? "s" : ""}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* AI Generation styles */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-white/50">Style de réponse IA</span>
-                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-violet-500/10 border border-violet-500/20">
-                  <Bot size={12} className="text-violet-400" />
-                  <span className="text-[10px] font-medium text-violet-400">Propulsé par IA</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { key: "professional", label: "Pro", icon: Award },
-                  { key: "friendly", label: "Amical", icon: MessageCircle },
-                  { key: "apologetic", label: "Excuses", icon: AlertCircle },
-                ].map(({ key, label, icon: Icon }) => (
-                  <button
-                    key={key}
-                    onClick={() => setGenerationStyle(key as typeof generationStyle)}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
-                      generationStyle === key
-                        ? "bg-violet-500/15 border-violet-500/30 text-violet-400"
-                        : "bg-white/[0.02] border-white/[0.06] text-white/40 hover:bg-white/[0.04] hover:text-white/60"
-                    }`}
-                  >
-                    <Icon size={16} />
-                    <span className="text-[10px] font-medium">{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Generate button */}
+        {/* Actions footer */}
+        <div className="shrink-0 p-6 border-t border-white/[0.06] space-y-3">
+          {/* Primary actions */}
+          <div className="grid grid-cols-2 gap-2">
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={handleGenerateAI}
-              disabled={isGenerating}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 transition-all disabled:opacity-50 shadow-lg shadow-violet-500/20"
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 transition-all shadow-lg shadow-violet-500/20"
             >
-              {isGenerating ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Génération en cours...
-                </>
-              ) : (
-                <>
-                  <Wand2 size={16} />
-                  Générer une réponse IA
-                </>
-              )}
+              <Sparkles size={16} />
+              Réponse IA
             </motion.button>
-
-            {/* Response textarea */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-white/50">
-                  {review.responded ? "Modifier la réponse" : "Votre réponse"}
-                </span>
-                <span className="text-[10px] text-white/25">{response.length} caractères</span>
-              </div>
-              <textarea
-                value={response}
-                onChange={(e) => setResponse(e.target.value)}
-                placeholder="Écrivez votre réponse personnalisée..."
-                className="w-full h-40 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder-white/25 resize-none focus:outline-none focus:border-[#00C9A7]/50 focus:bg-white/[0.04] transition-all"
-              />
-            </div>
-          </>
-        ) : (
-          /* History tab */
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-xs text-white/40">
-              <History size={14} />
-              <span>Historique des échanges</span>
-            </div>
-
-            <div className="relative pl-4 border-l-2 border-white/[0.06] space-y-4">
-              {/* Original review */}
-              <div className="relative">
-                <div className="absolute -left-[21px] w-4 h-4 rounded-full bg-[#0a0a0b] border-2 border-amber-500" />
-                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-medium text-white/60">{review.name}</span>
-                    <span className="text-[10px] text-white/30">{review.dateRelative}</span>
-                  </div>
-                  <p className="text-sm text-white/50">{review.text}</p>
-                </div>
-              </div>
-
-              {/* Response if exists */}
-              {review.responded && review.response && (
-                <div className="relative">
-                  <div className="absolute -left-[21px] w-4 h-4 rounded-full bg-[#0a0a0b] border-2 border-[#00C9A7]" />
-                  <div className="p-4 rounded-xl bg-[#00C9A7]/[0.06] border border-[#00C9A7]/20">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-medium text-[#00C9A7]">Votre réponse</span>
-                      <span className="text-[10px] text-white/30">{review.responseDate}</span>
-                    </div>
-                    <p className="text-sm text-white/50">{review.response}</p>
-                  </div>
-                </div>
-              )}
-
-              {!review.responded && (
-                <div className="relative">
-                  <div className="absolute -left-[21px] w-4 h-4 rounded-full bg-[#0a0a0b] border-2 border-dashed border-white/20" />
-                  <div className="p-4 rounded-xl border border-dashed border-white/[0.1] bg-white/[0.01]">
-                    <p className="text-xs text-white/30 text-center">En attente de réponse...</p>
-                  </div>
-                </div>
-              )}
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium bg-white/[0.04] text-white/70 border border-white/[0.08] hover:bg-white/[0.08] transition-all"
+            >
+              <Mail size={16} />
+              Envoyer email
+            </motion.button>
           </div>
-        )}
-      </div>
 
-      {/* Footer actions */}
-      <div className="shrink-0 p-5 border-t border-white/[0.06] space-y-3">
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
-          disabled={!response.trim()}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-[#00C9A7] text-black hover:bg-[#00E4BC] transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#00C9A7]/20"
-        >
-          <Send size={16} />
-          {review.responded ? "Mettre à jour" : "Publier la réponse"}
-        </motion.button>
-
-        <div className="flex items-center gap-2">
-          <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium bg-white/[0.03] text-white/50 border border-white/[0.06] hover:bg-white/[0.06] hover:text-white/70 transition-all">
-            <ExternalLink size={12} />
-            Voir sur {review.source}
-          </button>
-          <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium bg-white/[0.03] text-white/50 border border-white/[0.06] hover:bg-white/[0.06] hover:text-white/70 transition-all">
-            <Flag size={12} />
-            Signaler
-          </button>
+          {/* Secondary actions */}
+          <div className="grid grid-cols-2 gap-2">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/[0.02] text-white/50 border border-white/[0.06] hover:bg-white/[0.04] hover:text-white/70 transition-all"
+            >
+              <Gift size={14} />
+              Geste commercial
+            </motion.button>
+            {feedback.status !== "resolved" ? (
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => onStatusChange("resolved")}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-[#00C9A7]/10 text-[#00C9A7] border border-[#00C9A7]/20 hover:bg-[#00C9A7]/20 transition-all"
+              >
+                <CheckCircle2 size={14} />
+                Marquer résolu
+              </motion.button>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => onStatusChange("pending")}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/[0.02] text-white/50 border border-white/[0.06] hover:bg-white/[0.04] hover:text-white/70 transition-all"
+              >
+                <Timer size={14} />
+                Réouvrir
+              </motion.button>
+            )}
+          </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+
+      {/* AI Response Modal */}
+      <AnimatePresence>
+        {showAIModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowAIModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg rounded-2xl bg-[#0f0f10] border border-white/[0.08] shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-violet-500/15">
+                    <Sparkles size={18} className="text-violet-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-white">Réponse générée par IA</h3>
+                    <p className="text-xs text-white/40">Personnalisée selon le feedback</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAIModal(false)}
+                  className="p-2 rounded-lg text-white/40 hover:text-white/60 hover:bg-white/[0.04] transition-all"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-5">
+                {isGenerating ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <Loader2 size={32} className="text-violet-400 animate-spin mb-4" />
+                    <p className="text-sm text-white/50">Génération en cours...</p>
+                  </div>
+                ) : (
+                  <textarea
+                    value={generatedResponse}
+                    onChange={(e) => setGeneratedResponse(e.target.value)}
+                    className="w-full h-64 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-white/80 placeholder-white/25 resize-none focus:outline-none focus:border-violet-500/30 transition-all leading-relaxed"
+                  />
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 p-5 border-t border-white/[0.06]">
+                <button
+                  onClick={() => setShowAIModal(false)}
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-white/50 hover:text-white/70 transition-all"
+                >
+                  Annuler
+                </button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={isGenerating}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#00C9A7] text-black hover:bg-[#00E4BC] transition-all disabled:opacity-50"
+                >
+                  <Send size={14} />
+                  Envoyer l'email
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }
 
-function UrgentReviewsBanner({ count, onClick }: { count: number; onClick: () => void }) {
-  if (count === 0) return null
-
+// ============================================
+// EMPTY STATE COMPONENT
+// ============================================
+function EmptyState() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-500/10 via-orange-500/10 to-red-500/10 border border-red-500/20 p-5"
+      className="flex flex-col items-center justify-center py-20"
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-orange-500/5" />
-      <div className="absolute top-0 right-0 w-40 h-40 bg-red-500/10 rounded-full blur-3xl" />
-
-      <div className="relative flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <motion.div
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="p-3 rounded-xl bg-red-500/20"
-          >
-            <AlertCircle size={20} className="text-red-400" />
-          </motion.div>
-          <div>
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-              {count} avis négatif{count > 1 ? "s" : ""} en attente
-              <motion.span
-                animate={{ opacity: [1, 0.5, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="px-2 py-0.5 text-[10px] font-bold bg-red-500/20 text-red-400 rounded-full"
-              >
-                URGENT
-              </motion.span>
-            </h3>
-            <p className="text-xs text-white/40 mt-0.5">
-              Répondre rapidement aux avis négatifs améliore votre e-réputation de 33%
-            </p>
-          </div>
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onClick}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-red-500 text-white hover:bg-red-400 transition-all shadow-lg shadow-red-500/30"
-        >
-          <Zap size={16} />
-          Traiter maintenant
-        </motion.button>
-      </div>
+      <motion.div
+        animate={{
+          scale: [1, 1.05, 1],
+          rotate: [0, 5, -5, 0]
+        }}
+        transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+        className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-500/20 to-[#00C9A7]/10 flex items-center justify-center mb-6"
+      >
+        <PartyPopper size={40} className="text-[#00C9A7]" />
+      </motion.div>
+      <h3 className="text-xl font-semibold text-white mb-2">Aucun feedback négatif</h3>
+      <p className="text-sm text-white/40 text-center max-w-sm">
+        Vos clients sont satisfaits ! Continuez comme ça, votre réputation est au top.
+      </p>
     </motion.div>
   )
 }
 
 // ============================================
-// MAIN PAGE
+// MAIN PAGE COMPONENT
 // ============================================
-export default function AvisPage() {
-  const [filter, setFilter] = useState<FilterType>("all")
-  const [sort, setSort] = useState<SortType>("recent")
+export default function FeedbacksPage() {
+  const [feedbacks, setFeedbacks] = useState(feedbacksData)
+  const [filter, setFilter] = useState<"all" | FeedbackStatus>("all")
   const [search, setSearch] = useState("")
-  const [selectedReview, setSelectedReview] = useState<Review | null>(null)
-  const [showSortMenu, setShowSortMenu] = useState(false)
+  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null)
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [toast, setToast] = useState({ visible: false, message: "" })
+  const [showConfetti, setShowConfetti] = useState(false)
 
-  const filteredReviews = useMemo(() => {
-    let result = [...reviewsData]
+  const filteredFeedbacks = useMemo(() => {
+    let result = [...feedbacks]
 
-    if (filter === "positive") {
-      result = result.filter(r => r.rating >= 4)
-    } else if (filter === "negative") {
-      result = result.filter(r => r.rating <= 3)
-    } else if (filter === "unanswered") {
-      result = result.filter(r => !r.responded)
+    if (filter !== "all") {
+      result = result.filter(f => f.status === filter)
     }
 
     if (search) {
       const searchLower = search.toLowerCase()
-      result = result.filter(r =>
-        r.name.toLowerCase().includes(searchLower) ||
-        r.text.toLowerCase().includes(searchLower)
+      result = result.filter(f =>
+        f.clientName.toLowerCase().includes(searchLower) ||
+        f.message.toLowerCase().includes(searchLower) ||
+        f.clientEmail.toLowerCase().includes(searchLower)
       )
     }
 
-    switch (sort) {
-      case "oldest":
-        result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        break
-      case "best":
-        result.sort((a, b) => b.rating - a.rating)
-        break
-      case "worst":
-        result.sort((a, b) => a.rating - b.rating)
-        break
-      default:
-        result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    }
-
     return result
-  }, [filter, sort, search])
-
-  const counts = useMemo(() => ({
-    all: reviewsData.length,
-    positive: reviewsData.filter(r => r.rating >= 4).length,
-    negative: reviewsData.filter(r => r.rating <= 3).length,
-    unanswered: reviewsData.filter(r => !r.responded).length,
-  }), [])
+  }, [feedbacks, filter, search])
 
   const stats = useMemo(() => {
-    const avgRating = reviewsData.reduce((s, r) => s + r.rating, 0) / reviewsData.length
-    const responseRate = (reviewsData.filter(r => r.responded).length / reviewsData.length) * 100
-    const urgentCount = reviewsData.filter(r => r.rating <= 2 && !r.responded).length
-    return { avgRating, responseRate, urgentCount }
+    const total = feedbacks.length
+    const resolved = feedbacks.filter(f => f.status === "resolved").length
+    const pending = feedbacks.filter(f => f.status === "pending").length
+    const rate = total > 0 ? Math.round((resolved / total) * 100) : 0
+    return { total, resolved, pending, rate }
+  }, [feedbacks])
+
+  const showToast = useCallback((message: string) => {
+    setToast({ visible: true, message })
   }, [])
 
-  const sortLabels: Record<SortType, string> = {
-    recent: "Plus récents",
-    oldest: "Plus anciens",
-    best: "Meilleure note",
-    worst: "Pire note",
+  const handleStatusChange = useCallback((feedbackId: number, newStatus: FeedbackStatus) => {
+    setFeedbacks(prev => prev.map(f => {
+      if (f.id === feedbackId) {
+        const newTimeline = [...f.timeline]
+        if (newStatus === "resolved" && !newTimeline.find(e => e.type === "resolved")) {
+          newTimeline.push({
+            id: newTimeline.length + 1,
+            type: "resolved",
+            date: "À l'instant",
+            note: "Marqué comme résolu"
+          })
+        }
+        return { ...f, status: newStatus, timeline: newTimeline }
+      }
+      return f
+    }))
+
+    if (newStatus === "resolved") {
+      showToast("Feedback marqué comme résolu")
+
+      // Check if all are resolved for confetti
+      const allResolved = feedbacks.every(f => f.id === feedbackId ? true : f.status === "resolved")
+      if (allResolved) {
+        setShowConfetti(true)
+        setTimeout(() => setShowConfetti(false), 4000)
+      }
+    }
+  }, [feedbacks, showToast])
+
+  const handleAddNote = useCallback((feedbackId: number, note: string) => {
+    setFeedbacks(prev => prev.map(f => {
+      if (f.id === feedbackId) {
+        return { ...f, internalNotes: [...f.internalNotes, note] }
+      }
+      return f
+    }))
+    showToast("Note ajoutée")
+  }, [showToast])
+
+  const handleBulkAction = (action: "resolve" | "archive") => {
+    if (action === "resolve") {
+      selectedIds.forEach(id => handleStatusChange(id, "resolved"))
+      setSelectedIds([])
+    }
   }
 
   return (
     <div className="flex h-screen bg-[#0a0a0b]">
+      <Confetti active={showConfetti} />
+      <Toast message={toast.message} visible={toast.visible} onClose={() => setToast({ ...toast, visible: false })} />
+
       {/* Main content */}
       <motion.div
         className="flex-1 flex flex-col overflow-hidden"
@@ -962,18 +940,22 @@ export default function AvisPage() {
             <div className="flex items-center gap-4">
               <Link
                 href="/dashboard"
-                className="p-2.5 rounded-xl text-white/40 hover:text-white/70 hover:bg-white/[0.04] transition-all"
+                className="p-2.5 rounded-xl text-white/40 hover:text-white/60 hover:bg-white/[0.04] transition-all"
               >
                 <ArrowLeft size={20} />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-                  Avis
-                  <span className="px-3 py-1 text-sm font-semibold bg-gradient-to-r from-[#00C9A7]/20 to-[#00C9A7]/10 text-[#00C9A7] rounded-lg border border-[#00C9A7]/20">
-                    {reviewsData.length}
-                  </span>
-                </h1>
-                <p className="text-sm text-white/40 mt-1">Gérez et répondez à tous vos avis clients</p>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-orange-500/15">
+                    <MessageSquareWarning size={20} className="text-orange-400" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-white">Feedbacks privés</h1>
+                    <p className="text-sm text-white/40 mt-0.5">
+                      Avis interceptés avant Google — Votre chance de reconquérir ces clients
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -984,195 +966,124 @@ export default function AvisPage() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher dans les avis..."
-                className="w-80 pl-11 pr-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#00C9A7]/50 focus:bg-white/[0.04] transition-all"
+                placeholder="Rechercher..."
+                className="w-72 pl-11 pr-16 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/[0.15] transition-all"
               />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.06] text-[10px] text-white/30">
+                <Command size={10} />
+                K
+              </div>
             </div>
           </motion.div>
 
-          {/* Stats row */}
-          <motion.div variants={item} className="grid grid-cols-4 gap-4 mb-6">
-            <StatCard
-              icon={MessageSquare}
-              label="Total avis"
-              value={reviewsData.length}
-              trend="up"
-              trendValue="+12%"
-              color="#00C9A7"
-              glowColor="rgba(0, 201, 167, 0.08)"
-            />
-            <StatCard
-              icon={Star}
-              label="Note moyenne"
-              value={stats.avgRating}
-              suffix="/5"
-              trend="up"
-              trendValue="+0.2"
-              color="#EAB308"
-              glowColor="rgba(234, 179, 8, 0.08)"
-            />
-            <StatCard
-              icon={Zap}
-              label="Taux de réponse"
-              value={stats.responseRate}
-              suffix="%"
-              trend="up"
-              trendValue="+5%"
-              color="#8B5CF6"
-              glowColor="rgba(139, 92, 246, 0.08)"
-            />
-            <StatCard
-              icon={Target}
-              label="À traiter"
-              value={counts.unanswered}
-              color="#F97316"
-              glowColor="rgba(249, 115, 22, 0.08)"
-            />
+          {/* Stats */}
+          <motion.div variants={item} className="flex items-center gap-4 mb-6">
+            <StatCard icon={Inbox} label="Ce mois" value={stats.total} color="#8B5CF6" />
+            <StatCard icon={CheckCheck} label="Traités" value={stats.resolved} color="#00C9A7" />
+            <StatCard icon={AlertCircle} label="En attente" value={stats.pending} color="#F97316" />
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+              <div className="p-2 rounded-lg bg-emerald-500/15">
+                <TrendingUp size={16} className="text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-xl font-bold text-white">{stats.rate}%</p>
+                <p className="text-[11px] text-white/40">Taux traitement</p>
+              </div>
+            </div>
           </motion.div>
 
-          {/* Urgent banner */}
-          <motion.div variants={item}>
-            <UrgentReviewsBanner
-              count={stats.urgentCount}
-              onClick={() => setFilter("negative")}
-            />
-          </motion.div>
-
-          {/* Filters & Sort */}
-          <motion.div variants={item} className="flex items-center justify-between mt-6">
-            <div className="flex items-center gap-2">
-              <FilterPill
-                active={filter === "all"}
-                count={counts.all}
-                onClick={() => setFilter("all")}
-              >
-                Tous
+          {/* Filters */}
+          <motion.div variants={item} className="flex items-center justify-between">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.02]">
+              <FilterPill active={filter === "all"} onClick={() => setFilter("all")}>
+                Tous ({feedbacks.length})
               </FilterPill>
-              <FilterPill
-                active={filter === "positive"}
-                count={counts.positive}
-                onClick={() => setFilter("positive")}
-              >
-                Positifs (4-5★)
+              <FilterPill active={filter === "pending"} onClick={() => setFilter("pending")}>
+                À traiter ({feedbacks.filter(f => f.status === "pending").length})
               </FilterPill>
-              <FilterPill
-                active={filter === "negative"}
-                count={counts.negative}
-                onClick={() => setFilter("negative")}
-              >
-                Négatifs (1-3★)
+              <FilterPill active={filter === "in_progress"} onClick={() => setFilter("in_progress")}>
+                En cours ({feedbacks.filter(f => f.status === "in_progress").length})
               </FilterPill>
-              <FilterPill
-                active={filter === "unanswered"}
-                count={counts.unanswered}
-                onClick={() => setFilter("unanswered")}
-              >
-                Non répondus
+              <FilterPill active={filter === "resolved"} onClick={() => setFilter("resolved")}>
+                Résolus ({feedbacks.filter(f => f.status === "resolved").length})
               </FilterPill>
             </div>
 
-            {/* Sort dropdown */}
-            <div className="relative">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowSortMenu(!showSortMenu)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white/[0.03] text-white/60 border border-white/[0.06] hover:bg-white/[0.06] hover:text-white/80 transition-all"
-              >
-                <Filter size={14} />
-                {sortLabels[sort]}
-                <ChevronDown size={14} className={`transition-transform ${showSortMenu ? "rotate-180" : ""}`} />
-              </motion.button>
-
-              <AnimatePresence>
-                {showSortMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    className="absolute right-0 top-full mt-2 w-48 p-1.5 rounded-xl bg-[#1a1a1b] border border-white/[0.08] shadow-2xl z-50"
+            {/* Bulk actions */}
+            <AnimatePresence>
+              {selectedIds.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="flex items-center gap-2"
+                >
+                  <span className="text-sm text-white/40">{selectedIds.length} sélectionné(s)</span>
+                  <button
+                    onClick={() => handleBulkAction("resolve")}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#00C9A7]/10 text-[#00C9A7] hover:bg-[#00C9A7]/20 transition-all"
                   >
-                    {(Object.keys(sortLabels) as SortType[]).map((key) => (
-                      <button
-                        key={key}
-                        onClick={() => {
-                          setSort(key)
-                          setShowSortMenu(false)
-                        }}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all ${
-                          sort === key
-                            ? "bg-[#00C9A7]/15 text-[#00C9A7]"
-                            : "text-white/60 hover:bg-white/[0.06] hover:text-white"
-                        }`}
-                      >
-                        {sortLabels[key]}
-                        {sort === key && <Check size={14} />}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                    <CheckCircle2 size={14} />
+                    Résoudre
+                  </button>
+                  <button
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] text-white/50 hover:bg-white/[0.08] transition-all"
+                  >
+                    <Download size={14} />
+                    Exporter
+                  </button>
+                  <button
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] text-white/50 hover:bg-white/[0.08] transition-all"
+                  >
+                    <Archive size={14} />
+                    Archiver
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </header>
 
-        {/* Reviews list */}
+        {/* Feedback list */}
         <div className="flex-1 overflow-auto px-8 py-6">
-          <motion.div
-            className="space-y-3"
-            variants={container}
-            initial="hidden"
-            animate="show"
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredReviews.map((review) => (
-                <ReviewCard
-                  key={review.id}
-                  review={review}
-                  selected={selectedReview?.id === review.id}
-                  onClick={() => setSelectedReview(review)}
-                  onRespond={() => setSelectedReview(review)}
+          {filteredFeedbacks.length > 0 ? (
+            <motion.div
+              className="space-y-2"
+              variants={container}
+              initial="hidden"
+              animate="show"
+            >
+              {filteredFeedbacks.map((feedback) => (
+                <FeedbackRow
+                  key={feedback.id}
+                  feedback={feedback}
+                  selected={selectedIds.includes(feedback.id)}
+                  onSelect={() => setSelectedFeedback(feedback)}
+                  showCheckbox={selectedIds.length > 0}
                 />
               ))}
-            </AnimatePresence>
-
-            {filteredReviews.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center py-20 text-center"
-              >
-                <div className="w-20 h-20 rounded-2xl bg-white/[0.03] flex items-center justify-center mb-5">
-                  <MessageSquare size={32} className="text-white/15" />
-                </div>
-                <h3 className="text-lg font-semibold text-white/60 mb-2">Aucun avis trouvé</h3>
-                <p className="text-sm text-white/30 mb-6">Essayez de modifier vos filtres ou votre recherche</p>
-                <button
-                  onClick={() => { setFilter("all"); setSearch("") }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white/50 bg-white/[0.04] hover:bg-white/[0.08] transition-all"
-                >
-                  <RotateCcw size={14} />
-                  Réinitialiser les filtres
-                </button>
-              </motion.div>
-            )}
-          </motion.div>
+            </motion.div>
+          ) : (
+            <EmptyState />
+          )}
         </div>
       </motion.div>
 
-      {/* Sidebar */}
+      {/* Detail panel */}
       <AnimatePresence>
-        {selectedReview && (
+        {selectedFeedback && (
           <motion.aside
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 440, opacity: 1 }}
+            animate={{ width: 480, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.35 }}
             className="shrink-0 border-l border-white/[0.06] overflow-hidden"
           >
-            <ReviewDetailSidebar
-              review={selectedReview}
-              onClose={() => setSelectedReview(null)}
+            <DetailPanel
+              feedback={selectedFeedback}
+              onClose={() => setSelectedFeedback(null)}
+              onStatusChange={(status) => handleStatusChange(selectedFeedback.id, status)}
+              onAddNote={(note) => handleAddNote(selectedFeedback.id, note)}
             />
           </motion.aside>
         )}
