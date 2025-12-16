@@ -297,12 +297,16 @@ function FloatingCTA() {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-950 text-white relative">
+      {/* Background gradients qui couvrent TOUTE la page */}
+      <div className="absolute inset-0 bg-gradient-to-b from-violet-950/20 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-r from-violet-600/10 via-fuchsia-600/10 to-violet-600/10 blur-3xl rounded-full pointer-events-none" />
+
       {/* Floating CTA */}
       <FloatingCTA />
 
       {/* Header - Simple, non-fixe, transparent */}
-      <header className="relative z-40 py-6 bg-transparent">
+      <header className="relative z-40 py-6">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -335,10 +339,6 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative pt-12 pb-20 lg:pt-16 lg:pb-28 overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-violet-950/20 via-transparent to-transparent" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-r from-violet-600/10 via-fuchsia-600/10 to-violet-600/10 blur-3xl rounded-full" />
-
         <div className="container mx-auto px-4 relative">
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
             <motion.div
@@ -395,7 +395,7 @@ export default function LandingPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-12 lg:py-16">
+      <section className="py-12 lg:py-16 relative">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -425,7 +425,7 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-14 lg:py-20 scroll-mt-24">
+      <section id="how-it-works" className="py-14 lg:py-20 scroll-mt-24 relative">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -482,7 +482,7 @@ export default function LandingPage() {
       </section>
 
       {/* Comparison */}
-      <section className="py-14 lg:py-20 bg-gradient-to-b from-transparent via-violet-950/10 to-transparent">
+      <section className="py-14 lg:py-20 bg-gradient-to-b from-transparent via-violet-950/10 to-transparent relative">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -568,7 +568,7 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="py-14 lg:py-20">
+      <section className="py-14 lg:py-20 relative">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -609,7 +609,7 @@ export default function LandingPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-14 lg:py-20">
+      <section className="py-14 lg:py-20 relative">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -649,7 +649,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 border-t border-gray-800/50">
+      <footer className="py-8 border-t border-gray-800/50 relative">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-center gap-3 text-sm text-gray-500">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 flex items-center justify-center">
