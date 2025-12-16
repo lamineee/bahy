@@ -35,9 +35,9 @@ const dmConversation = [
   { sender: "prospect", message: "Le passage sur la productivité, j'ai vraiment du mal à m'organiser en ce moment", delay: 4500 },
   { sender: "ai", message: "Je comprends totalement, c'est un problème super courant ! Tu es entrepreneur ou salarié actuellement ?", delay: 6500 },
   { sender: "prospect", message: "Entrepreneur, j'ai lancé mon activité il y a 6 mois", delay: 9000 },
-  { sender: "ai", message: "Top ! Les 6 premiers mois sont cruciaux. On propose un appel découverte gratuit pour voir comment t'aider concrètement. Ça te dit de bloquer 30min cette semaine ?", delay: 11000 },
+  { sender: "ai", message: "Top ! On propose un appel découverte gratuit pour voir comment t'aider. Ça te dit ?", delay: 11000 },
   { sender: "prospect", message: "Oui carrément, je suis dispo jeudi !", delay: 14000 },
-  { sender: "ai", message: "Parfait ! Voici le lien pour réserver ton créneau : calendly.com/coaching. À jeudi !", delay: 16000 },
+  { sender: "ai", message: "Parfait ! Voici le lien pour réserver : calendly.com/coaching. À jeudi !", delay: 16000 },
 ]
 
 function DMDemo() {
@@ -99,7 +99,7 @@ function DMDemo() {
         </div>
 
         {/* Messages */}
-        <div className="space-y-4 min-h-[380px] max-h-[380px] overflow-hidden">
+        <div className="space-y-4 min-h-[350px] max-h-[350px] overflow-hidden">
           <AnimatePresence>
             {dmConversation.slice(0, visibleMessages).map((msg, idx) => (
               <motion.div
@@ -110,14 +110,14 @@ function DMDemo() {
                 className={`flex ${msg.sender === "ai" ? "justify-start" : "justify-end"}`}
               >
                 <div
-                  className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                  className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                     msg.sender === "ai"
                       ? "bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/20"
                       : "bg-gray-700/80 text-gray-100"
                   }`}
                 >
                   {msg.sender === "ai" && (
-                    <span className="flex items-center gap-1.5 text-xs text-violet-200/80 mb-1.5 font-medium">
+                    <span className="flex items-center gap-1.5 text-xs text-violet-200/80 mb-1 font-medium">
                       <Bot className="w-3.5 h-3.5" /> Bahy IA
                     </span>
                   )}
@@ -296,29 +296,13 @@ function FloatingCTA() {
 }
 
 export default function LandingPage() {
-  const [isScrolled, setIsScrolled] = useState(false)
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Floating CTA */}
       <FloatingCTA />
 
-      {/* Header Sticky */}
-      <header
-        className={`fixed top-0 left-0 right-0 z-40 border-b transition-all duration-300 ${
-          isScrolled
-            ? "bg-gray-950/95 backdrop-blur-xl border-gray-800/50 py-4"
-            : "bg-transparent border-transparent py-6"
-        }`}
-      >
+      {/* Header - Simple, non-fixe, transparent */}
+      <header className="relative z-40 py-6">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -350,7 +334,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-36 lg:pb-28 overflow-hidden">
+      <section className="relative pt-12 pb-20 lg:pt-16 lg:pb-28 overflow-hidden">
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-violet-950/20 via-transparent to-transparent" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-to-r from-violet-600/10 via-fuchsia-600/10 to-violet-600/10 blur-3xl rounded-full" />
