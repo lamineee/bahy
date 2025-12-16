@@ -336,7 +336,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-8 pb-20 lg:pt-10 lg:pb-28 overflow-hidden">
+      <section className="relative pt-10 pb-20 lg:pt-12 lg:pb-28 overflow-hidden">
         <div className="container mx-auto px-4 relative">
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
             <motion.div
