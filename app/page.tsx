@@ -33,11 +33,9 @@ const dmConversation = [
   { sender: "prospect", message: "Salut ! J'ai vu ta vidéo sur le coaching, ça m'intéresse beaucoup", delay: 0 },
   { sender: "ai", message: "Hey ! Merci pour ton message ! Qu'est-ce qui t'a particulièrement parlé dans la vidéo ?", delay: 2000 },
   { sender: "prospect", message: "Le passage sur la productivité, j'ai vraiment du mal à m'organiser en ce moment", delay: 4500 },
-  { sender: "ai", message: "Je comprends totalement, c'est un problème super courant ! Tu es entrepreneur ou salarié actuellement ?", delay: 6500 },
+  { sender: "ai", message: "Je comprends totalement ! Tu es entrepreneur ou salarié actuellement ?", delay: 6500 },
   { sender: "prospect", message: "Entrepreneur, j'ai lancé mon activité il y a 6 mois", delay: 9000 },
-  { sender: "ai", message: "Top ! On propose un appel découverte gratuit pour voir comment t'aider. Ça te dit ?", delay: 11000 },
-  { sender: "prospect", message: "Oui carrément, je suis dispo jeudi !", delay: 14000 },
-  { sender: "ai", message: "Parfait ! Voici le lien pour réserver : calendly.com/coaching. À jeudi !", delay: 16000 },
+  { sender: "ai", message: "Top ! On propose un appel découverte gratuit de 30min. Ça te dit ? 📅", delay: 11000 },
 ]
 
 function DMDemo() {
@@ -338,7 +336,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-12 pb-20 lg:pt-16 lg:pb-28 overflow-hidden">
+      <section className="relative pt-8 pb-20 lg:pt-10 lg:pb-28 overflow-hidden">
         <div className="container mx-auto px-4 relative">
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
             <motion.div
