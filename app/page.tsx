@@ -302,7 +302,7 @@ export default function LandingPage() {
       <FloatingCTA />
 
       {/* Header - Simple, non-fixe, transparent */}
-      <header className="relative z-40 py-6">
+      <header className="relative z-40 py-6 bg-transparent">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
