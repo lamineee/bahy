@@ -25,7 +25,8 @@ import {
   Sparkles,
   MessageSquare,
   BrainCircuit,
-  Rocket
+  Rocket,
+  Star
 } from "lucide-react"
 
 // Conversation DM simulée - plus réaliste et engageante
@@ -328,7 +329,7 @@ export default function LandingPage() {
             <Link href="https://calendly.com/bahyamine28/30min" target="_blank">
               <Button className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white border-0 shadow-lg shadow-violet-500/20">
                 <Calendar className="w-4 h-4 mr-2" />
-                Réserver une démo
+                Réserver ma démo gratuite
               </Button>
             </Link>
           </motion.div>
@@ -355,11 +356,11 @@ export default function LandingPage() {
                 <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
                   répond à tes DMs
                 </span>{" "}
-                pendant que tu dors
+                et book tes calls
               </h1>
 
               <p className="text-lg sm:text-xl text-gray-400 mb-10 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                Automatise tes conversations Instagram. L'IA qualifie tes prospects et les envoie vers ton Calendly — 24h/24, 7j/7.
+                Automatise tes conversations Instagram. L'IA qualifie tes prospects et les envoie vers ton Calendly, 24h/24, 7j/7.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -381,7 +382,7 @@ export default function LandingPage() {
               </div>
 
               <p className="text-sm text-gray-500 mt-6">
-                Appel de 30 min — Sans engagement — Places limitées
+                Appel de 30 min · Sans engagement · Places limitées
               </p>
             </motion.div>
 
@@ -638,7 +639,7 @@ export default function LandingPage() {
                 </Link>
 
                 <p className="text-sm text-gray-500 mt-6">
-                  Appel de 30 min — Sans engagement — Places limitées
+                  Appel de 30 min · Sans engagement · Places limitées
                 </p>
               </div>
             </Card>
